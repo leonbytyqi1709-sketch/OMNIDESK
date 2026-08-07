@@ -1,0 +1,220 @@
+=====================================================================
+ OMNIDESK – OFFENE / UNTERBROCHENE ARBEITEN
+ Uebergabe an die naechste Claude-Session (anderer Account)
+ Stand: Session-Abbruch am 17.07.2026
+ Gehoert zu: DOKUMENTATION.txt (Gesamtstand) + WEITERMACHEN_PROMPT.txt
+=====================================================================
+
+KONTEXT DES ABBRUCHS
+---------------------------------------------------------------------
+Die Session wurde mitten in Aufgabe "Projektmanagement" gestoppt.
+Der ALLERLETZTE unterbrochene Befehl war:
+
+  Get-ChildItem src\modules\projects -Recurse -Filter .gitkeep | Remove-Item -Force
+  npm run build
+
+Das heisst: Der Projektmanagement-Code wurde seit dem letzten Schreiben
+NIE kompiliert. Es koennen .gitkeep-Reste in src/modules/projects/
+liegen (z.B. hooks/.gitkeep – harmlos) und es koennen TypeScript-
+Fehler im Modul stecken. ALS ERSTES npm run build ausfuehren!
+
+Ausserdem: Die Browser-Session war beim Abbruch AUSGELOGGT (das
+Vorschau-Fenster wurde neu gestartet und verlor die Clerk-Anmeldung).
+Deshalb konnten Befehlsbibliothek und Projektmanagement nicht mehr
+End-to-End getestet werden. Fuer E2E-Tests muss der Benutzer sich
+zuerst in der Browser-Vorschau anmelden.
+
+Lokale Dev-Server (falls nicht mehr aktiv):
+  Terminal 1: npm run dev        (Vite, Port 5173)
+  Terminal 2: npm run dev:api    (Hono, Port 8787)
+
+=====================================================================
+AUFGABE A: PROJEKTMANAGEMENT – Code komplett, UNVERIFIZIERT
+=====================================================================
+FERTIG (geschrieben, aber nie gebaut/getestet):
+  - src/db/schema/projects.ts: Tabellen projects, project_tasks,
+    milestones (mit FK-Cascade auf projects, Indizes). Bereits per
+    db:push in Neon angelegt!
+  - server/routes/projects.ts: komplette API, in server/index.ts
+    gemountet. Endpunkte:
+      GET  /api/projects                     Liste
+      GET  /api/projects/:id                 {project, tasks, milestones}
+      POST /api/projects                     anlegen
+      PUT  /api/projects/:id                 partial update
+      DEL  /api/projects/:id                 loeschen (cascade)
+      POST /api/projects/:id/tasks           Board-Aufgabe anlegen
+      PUT  /api/projects/tasks/:taskId       partial (Statuswechsel)
+      DEL  /api/projects/tasks/:taskId
+      POST /api/projects/:id/milestones
+      PUT  /api/projects/milestones/:milestoneId
+      DEL  /api/projects/milestones/:milestoneId
+  - src/modules/projects/api/index.ts: alle React-Query-Hooks
+    (useProjects, useProjectDetail, CRUD fuer Projekt/Task/Milestone;
+    Invalidierung ueber LIST_KEY + detailKey)
+  - src/modules/projects/constants.ts: PRIORITY_META,
+    PROJECT_STATUS_META (active/paused/done), BOARD_COLUMNS
+    (backlog/todo/in_progress/done)
+  - src/modules/projects/components/ProjectFormDialog.tsx
+  - src/modules/projects/components/ProjectBoard.tsx (4 Spalten,
+    Karten mit Prioritaets-Punkt, Verschieben per Pfeil-Buttons,
+    Inline-Formular "Neue Board-Aufgabe" -> landet im Backlog)
+  - src/modules/projects/components/MilestonePanel.tsx (Checkbox
+    done, Faelligkeitsdatum mit Ueberfaellig-Rot, Inline-Anlegen)
+  - src/modules/projects/index.tsx: Uebersicht (Karten-Grid) <->
+    Detailansicht (Board + Meilenstein-Panel) via useState,
+    KEINE URL-Subroute (bewusste MVP-Entscheidung)
+
+NAECHSTE SCHRITTE:
+  1. Rest-.gitkeep entfernen:
+     Get-ChildItem src\modules\projects -Recurse -Filter .gitkeep | Remove-Item -Force
+  2. npm run build -> Fehler beheben (Code ist ungetestet!)
+  3. E2E im Browser (eingeloggt): Projekt anlegen -> oeffnen ->
+     Board-Aufgabe anlegen -> per Pfeilen durch alle 4 Spalten ->
+     Meilenstein anlegen/abhaken -> Projekt bearbeiten/loeschen.
+
+=====================================================================
+AUFGABE B: BEFEHLSBIBLIOTHEK – fertig gebaut, E2E-TEST OFFEN
+=====================================================================
+Alles implementiert und Build war GRUEN. Nur der Browsertest fehlt
+(Session war ausgeloggt). Testplan (eingeloggt, /commands):
+  1. Empty-State zeigt Button "Starter-Bibliothek laden (18 Befehle)"
+     -> klicken -> 18 Befehle in Kategorien Linux/PowerShell/
+     Netzwerk/Cisco/Docker
+  2. Suche tippen (z.B. "ports") -> Echtzeit-Filter
+  3. Kategorie-Chip klicken -> Filter, "Alle" hebt auf
+  4. Copy-Button -> Haekchen-Feedback, Zwischenablage prüfen
+  5. Bearbeiten/Loeschen ueber Kontextmenue
+Relevante Dateien: src/modules/commands/* (api/, components/
+CommandFormDialog.tsx, starter-library.ts, index.tsx),
+server/routes/commands.ts (inkl. POST /bulk fuer den Starter-Import).
+
+=====================================================================
+AUFGABE C: PASSWORT-MANAGER – Backend FERTIG, Frontend FEHLT KOMPLETT
+=====================================================================
+FERTIG:
+  - src/db/schema/vault.ts: vaults (userId PK, salt, verifier)
+    + vault_entries (id, userId, category, ciphertext, iv).
+    Bereits in Neon. Kategorien: 'privat' | 'familie' | 'kunden'
+    (VAULT_CATEGORIES exportiert).
+  - server/routes/vault.ts (gemountet):
+      GET  /api/vault/meta       -> Vault-Row oder null
+      POST /api/vault/meta       -> einmalig anlegen (409 wenn existiert)
+      GET  /api/vault/entries
+      POST /api/vault/entries    {category, ciphertext, iv}
+      PUT  /api/vault/entries/:id
+      DEL  /api/vault/entries/:id
+    Alle Blobs sind Base64-validiert. Der Server sieht NIE Klartext.
+
+ZU BAUEN (Frontend, src/modules/passwords/):
+  1. src/lib/crypto.ts (neu, shared lib):
+     - deriveKey(masterPassword, saltB64): PBKDF2, 310000 Iterationen,
+       SHA-256 -> AES-GCM-Schluessel 256 Bit (crypto.subtle)
+     - encryptJson(key, obj) -> {ciphertext: b64, iv: b64}
+       (IV: 12 Bytes crypto.getRandomValues, pro Verschluesselung neu)
+     - decryptJson(key, ciphertextB64, ivB64) -> obj (wirft bei
+       falschem Schluessel -> genau so das Master-Passwort pruefen)
+     - Base64-Helfer (ArrayBuffer <-> String)
+  2. Vault-Store (zustand, NICHT persistiert!): {key: CryptoKey|null,
+     unlock(), lock()}. Der Schluessel existiert nur im RAM;
+     Seiten-Reload = gesperrt. Lock-Button im UI.
+  3. Ablauf in index.tsx:
+     - GET /meta == null  -> Setup-Screen: Master-Passwort 2x,
+       Salt erzeugen (16 Bytes), Key ableiten, Verifier =
+       encryptJson(key, {check:'omnidesk'}) als EIN Base64-JSON-Blob
+       (oder ciphertext+iv als JSON zusammen in verifier speichern),
+       POST /meta. WARNHINWEIS anzeigen: Master-Passwort ist NICHT
+       wiederherstellbar!
+     - GET /meta != null -> Unlock-Screen: Passwort -> Key ableiten
+       -> Verifier entschluesseln; Erfolg = entsperrt, Fehler =
+       "Falsches Master-Passwort".
+     - Entsperrt: Eintraege laden, jeden mit decryptJson entschluesseln.
+       Eintrag-Klartext: {title, username, password, url, notes}.
+       UI: Kategorie-Tabs (Privat/Familie/Kunden) + Suche, Liste mit
+       Copy-Buttons (Benutzername/Passwort), Passwort maskiert mit
+       Reveal-Auge, Anlegen/Bearbeiten-Dialog mit Passwort-Generator
+       (optional), Loeschen. Design wie die anderen Module.
+  4. E2E: Setup -> Eintrag anlegen -> Reload -> Unlock mit falschem
+     Passwort (muss scheitern) -> richtigem Passwort -> Eintrag
+     lesbar -> in Neon-Konsole pruefen, dass nur Ciphertext liegt.
+
+=====================================================================
+AUFGABE D: BOOKING – Backend FERTIG, Frontend FEHLT KOMPLETT
+=====================================================================
+FERTIG:
+  - src/db/schema/booking.ts: booking_settings (userId PK, slug
+    unique, active, slotMinutes, availability jsonb als
+    WeekAvailability = {mon..sun: {enabled, from:'09:00', to:'17:00'}}).
+    Bereits in Neon.
+  - server/routes/booking.ts (auth): GET/PUT /api/booking/settings
+    (Upsert, Slug-Regex ^[a-z0-9-]{3,50}$, 409 bei fremdem Slug)
+  - server/routes/public-booking.ts (OHNE Auth, in server/index.ts
+    VOR requireAuth gemountet – Reihenfolge nicht aendern!):
+      GET  /api/public/booking/:slug          -> {slug, slotMinutes, availability} (nur wenn active)
+      GET  /api/public/booking/:slug/slots?date=YYYY-MM-DD
+           -> {date, slots: ['09:00', ...]} (Verfuegbarkeit minus
+           bestehende Termine des Besitzers, Vergangenheit gefiltert)
+      POST /api/public/booking/:slug/book
+           {date, time, name, email, topic?}
+           -> prueft Slot-Gueltigkeit + Kollision, legt Termin in
+           appointments an (Titel "Buchung: <name>", Beschreibung
+           mit E-Mail/Anliegen), 409 wenn gerade vergeben
+
+ZU BAUEN:
+  1. Konfigurations-UI im Kalender-Modul (z.B. Dialog/Sheet
+     "Booking einrichten" neben "Neuer Termin"): Slug, aktiv-Switch,
+     Slot-Laenge, pro Wochentag enabled+von+bis; speichert per
+     PUT /api/booking/settings; zeigt die oeffentliche URL
+     ( <origin>/book/<slug> ) mit Copy-Button.
+  2. Oeffentliche Seite /book/:slug:
+     - In src/app/App.tsx: BrowserRouter muss VOR das Auth-Gate;
+       Route /book/:slug rendert IMMER (ohne SignedIn), der Rest
+       bleibt hinter SignedIn/SignedOut. (Aktuell liegt der
+       BrowserRouter in router.tsx INNERHALB von SignedIn ->
+       Struktur anpassen!)
+     - Seite (eigener Ordner z.B. src/modules/booking-public/ oder
+       src/app/BookingPage.tsx): OmniDesk-Look ohne Sidebar.
+       Ablauf: Datum waehlen (naechste 14 Tage, deaktivierte Tage
+       ausgrauen) -> GET /slots -> Slot-Buttons -> Formular
+       Name/E-Mail/Anliegen -> POST /book -> Bestaetigungsansicht.
+       Fehler 409 abfangen ("Slot gerade vergeben") -> Slots neu laden.
+  3. E2E: Settings speichern -> /book/<slug> in neuem Tab OHNE
+     Login oeffnen -> buchen -> Termin erscheint im Kalender des
+     Besitzers; danach denselben Slot erneut buchen -> muss 409 geben.
+  ACHTUNG Zeitzone: Slot-Berechnung nutzt die SERVER-Lokalzeit.
+  Lokal (Windows, Europe/Berlin) korrekt; bei Vercel (UTC) vor dem
+  Deployment auf explizite Zeitzonen-Behandlung umstellen (z.B.
+  date-fns-tz mit Europe/Berlin oder Zeitzone in booking_settings).
+
+=====================================================================
+AUFGABE E: PWA – NICHT BEGONNEN
+=====================================================================
+  - npm i -D vite-plugin-pwa; in vite.config.ts einbinden
+    (registerType 'autoUpdate')
+  - Manifest: name OmniDesk, lang de, theme_color #09090b,
+    background_color #09090b, display standalone
+  - Icons 192/512 (+maskable) im Gradient-Look (#230d8f -> #cf0a0a)
+    erzeugen (z.B. per Python/Pillow-Skript oder SVG->PNG)
+  - Pruefen: Build, Lighthouse/DevTools "installierbar", App-Shell
+    offline (API-Daten duerfen offline fehlen - Free Tier reicht
+    Cache-First fuer Assets)
+
+=====================================================================
+AUFGABE F: VERCEL-VORBEREITUNG – NICHT BEGONNEN
+=====================================================================
+  - api/[[...route]].ts mit hono/vercel-Adapter: dieselben Routen
+    wie server/index.ts (Route-Module sind wiederverwendbar; nur
+    der Node-Server-Teil entfaellt). dotenv entfaellt (Vercel-Env).
+  - vercel.json: SPA-Fallback-Rewrites (alles ausser /api/* und
+    /assets/* auf /index.html)
+  - README/Doku: Env-Variablen DATABASE_URL,
+    VITE_CLERK_PUBLISHABLE_KEY; Clerk-Domains eintragen
+  - Nicht deploybar ohne Nutzer-Account -> Nutzer-Aufgabe
+
+=====================================================================
+DANACH: PHASE 4 laut Spezifikation (Gmail-Klon, Cloud-Monitoring
+Google Drive + MEGA) – benoetigt vom Nutzer: Google-Cloud-Projekt
+mit OAuth2-Client (Gmail- + Drive-Scopes) und MEGA-Zugang.
+
+OFFENE NUTZER-AUFGABEN: siehe DOKUMENTATION.txt Abschnitt 7
+(u.a. NEON-PASSWORT ROTIEREN - Connection String stand im Chat!)
+=====================================================================

@@ -7,10 +7,13 @@ Produktivitaets-Webapp fuer IT-Profis (Spezifikation liegt als
 omnidesk_spezifikation_v2.pdf im Projektroot, bitte zuerst lesen).
 Das Repository: https://github.com/leonbytyqi1709-sketch/OMNIDESK.git
 
-WICHTIG – lies zuerst diese beiden Dateien im Projektroot:
+WICHTIG – lies zuerst diese drei Dateien im Projektroot:
   1. DOKUMENTATION.txt  (kompletter Entwicklungsstand, Architektur,
      bekannte Bugs/Loesungen, offene Punkte)
-  2. omnidesk_spezifikation_v2.pdf  (die fachliche Spezifikation)
+  2. OFFENE_ARBEITEN.txt  (DETAILLIERTE Uebergabe der unterbrochenen
+     Arbeiten: exakter Datei-Stand, fertige API-Endpunkte, praezise
+     naechste Schritte pro Aufgabe – deine eigentliche Arbeitsliste!)
+  3. omnidesk_spezifikation_v2.pdf  (die fachliche Spezifikation)
 
 STACK: Vite 8 + React 19 + TypeScript strict, Tailwind v4 (CSS-Config
 in src/styles/globals.css, kein tailwind.config.js), Shadcn/ui,
