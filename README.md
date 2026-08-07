@@ -1,32 +1,86 @@
-# React + TypeScript + Vite
+# OmniDesk
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Modulare All-in-One-Produktivitäts-Webapp für IT-Profis (FiSi/Power-User):
+Dashboard, Notizen, Aufgaben, Kalender mit öffentlichem Booking, Pomodoro,
+Kontakte, Projektmanagement (Kanban), Befehlsbibliothek, client-seitig
+verschlüsselter Passwort-Manager u.v.m. – als installierbare PWA.
 
-Currently, two official plugins are available:
+Vollständige fachliche Spezifikation: `omnidesk_spezifikation_v2.pdf`.
+Entwicklungsstand & Architektur: `DOKUMENTATION.txt`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
 
-## React Compiler
+- **Frontend:** Vite 8 + React 19 + TypeScript (strict), React Router v7,
+  Tailwind CSS v4 (CSS-Config in `src/styles/globals.css`), Shadcn/ui,
+  TanStack Query, zustand, vite-plugin-pwa
+- **Auth:** Clerk (JWT-Prüfung serverseitig via JWKS, kein Secret Key nötig)
+- **Backend:** Hono (lokal: Node-Server unter `server/`, Port 8787;
+  Produktion: Vercel-Function unter `api/`), Zod-Validierung
+- **Datenbank:** Neon Serverless Postgres + Drizzle ORM
+  (ein Schema pro Modul in `src/db/schema/`, Mandantentrennung über `user_id`)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Lokale Entwicklung
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+`.env.local` im Projektroot anlegen:
+
+```
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_…
+DATABASE_URL=postgresql://…   # Neon-Dashboard -> Connection String
+```
+
+Schema nach Neon syncen und beide Server starten (zwei Terminals):
+
+```bash
+npm run db:push
+npm run dev        # Frontend, Port 5173 (Proxy /api -> 8787)
+npm run dev:api    # Hono-API, Port 8787
+```
+
+## Architektur-Kurzüberblick
+
+- **Modul-Registry** `src/config/modules.ts`: Sidebar, Router und
+  Modul-Manager speisen sich nur aus dieser Liste; jedes Modul ist ein
+  Lazy-Chunk unter `src/modules/<id>/` mit `index.tsx` als einzigem Export.
+- **API-Routen** unter `server/routes/`, registriert in `server/app.ts`
+  (gemeinsame Factory für lokalen Node-Server und Vercel).
+  Öffentliche Routen (z.B. `/api/public/booking/:slug`) stehen VOR der
+  `requireAuth`-Middleware.
+- **Öffentliche Buchungsseite** `/book/:slug` rendert ohne Login
+  (Route vor dem SignedIn-Gate in `src/app/App.tsx`).
+- **Passwort-Manager:** PBKDF2 (310.000 Iterationen, SHA-256) →
+  AES-256-GCM im Browser (`src/lib/crypto.ts`); der Server speichert nur
+  Base64-Ciphertext, das Master-Passwort verlässt den Client nie.
+
+## Deployment (Vercel)
+
+Das Repo ist Vercel-ready: `api/[[...route]].ts` bedient alle `/api/*`-Routen
+über den `hono/vercel`-Adapter, `vercel.json` enthält die SPA-Rewrites.
+
+1. Repo bei Vercel importieren (Framework-Preset **Vite** wird erkannt,
+   Build `npm run build`, Output `dist/`).
+2. Environment-Variablen im Vercel-Projekt setzen:
+   | Variable | Wert |
+   | --- | --- |
+   | `DATABASE_URL` | Neon-Connection-String |
+   | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk Publishable Key (für Produktion `pk_live_…`) |
+   | `TZ` | `Europe/Berlin` – **wichtig fürs Booking!** |
+3. **Zeitzone:** Die Booking-Slot-Berechnung nutzt die Server-Lokalzeit.
+   Vercel läuft standardmäßig auf UTC – ohne `TZ=Europe/Berlin` wären
+   öffentliche Buchungen um 1–2 Stunden verschoben.
+4. Clerk: In der Clerk-Konsole die Vercel-Domain als erlaubte Domain
+   eintragen (für Produktion eine Production-Instance mit `pk_live_…`).
+5. Nach dem ersten Deploy prüfen: Login, ein Modul mit Datenbankzugriff
+   (z.B. Notizen) und `/book/<slug>` ohne Login.
+
+## Nützliche Skripte
+
+| Skript | Zweck |
+| --- | --- |
+| `npm run build` | Typecheck + Produktions-Build (inkl. PWA/Service-Worker) |
+| `npm run lint` | Oxlint |
+| `npm run db:push` | Drizzle-Schema nach Neon syncen |
+| `npm run db:studio` | Drizzle Studio (DB-GUI) |

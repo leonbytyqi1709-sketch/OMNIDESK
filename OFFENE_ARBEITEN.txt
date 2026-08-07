@@ -5,6 +5,59 @@
  Gehoert zu: DOKUMENTATION.txt (Gesamtstand) + WEITERMACHEN_PROMPT.txt
 =====================================================================
 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ UPDATE 07.08.2026 (neue Session, neues Geraet) – STATUS DER AUFGABEN
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ERLEDIGT in dieser Session (alle Builds gruen, npm run lint sauber):
+  [A] Projektmanagement: npm run build laeuft fehlerfrei durch –
+      der Code kompiliert. E2E-Test weiterhin OFFEN (siehe unten).
+  [C] Passwort-Manager-Frontend KOMPLETT gebaut:
+      src/lib/crypto.ts (PBKDF2 310k/SHA-256 -> AES-256-GCM, Base64),
+      src/modules/passwords/ (Setup-/Unlock-Screen, zustand-Store nur
+      im RAM, Kategorie-Tabs, Suche, Copy/Reveal, CRUD-Dialog mit
+      Passwort-Generator, Lock-Button). Verifier = btoa(JSON{ct,iv}).
+  [D] Booking-Frontend KOMPLETT gebaut:
+      - BrowserRouter jetzt in src/app/App.tsx; /book/:slug rendert
+        VOR dem SignedIn-Gate (eigener Lazy-Chunk BookingPage).
+      - src/app/BookingPage.tsx: Tag (14 Tage) -> Slots -> Formular ->
+        Bestaetigung, 409-Handling mit Slot-Reload.
+      - Kalender: Button "Booking einrichten" + BookingSettingsDialog
+        (Slug, aktiv, Slot-Laenge, Wochentags-Zeiten, URL-Copy);
+        API-Hooks in src/modules/calendar/api/booking.ts.
+      - Smoke-Test OHNE Login im Browser bestanden (Seite rendert,
+        Login-Seite unbeschaedigt).
+  [E] PWA KOMPLETT: vite-plugin-pwa (autoUpdate), Manifest de/#09090b,
+      Icons public/pwa-192.png, pwa-512.png, pwa-maskable-512.png,
+      apple-touch-icon.png im Gradient-Look. sw.js wird generiert.
+  [F] Vercel-Vorbereitung KOMPLETT: server/app.ts (gemeinsame
+      createApp-Factory), api/[[...route]].ts (hono/vercel),
+      vercel.json (SPA-Rewrites), README.md komplett neu mit
+      Deployment-Anleitung. WICHTIG: Auf Vercel Env TZ=Europe/Berlin
+      setzen (Booking-Slotberechnung nutzt Server-Lokalzeit)!
+
+ E2E-TESTS AM 07.08.2026 NACHMITTAGS ALLE BESTANDEN:
+  [A] Projektmanagement: Projekt-CRUD, Board-Aufgabe durch alle 4
+      Spalten (vor+zurueck), Meilenstein mit Ueberfaellig-Rot
+      angelegt/abgehakt, Loeschen mit Cascade. OK
+  [B] Befehlsbibliothek: Starter-Import (18 Befehle, 5 Kategorien),
+      Echtzeit-Suche, Kategorie-Chips, Bearbeiten, Loeschen. OK
+      (Copy-Button: Testumgebung blockiert Clipboard-API systemseitig
+      -> kurzer Handtest im normalen Browser empfohlen)
+  [C] Passwort-Manager: Setup, Eintrag+Generator, Reload sperrt,
+      falsches Passwort abgelehnt, richtiges entsperrt, DB enthaelt
+      nachweislich NUR Ciphertext. Test-Vault danach aus DB entfernt
+      -> Nutzer setzt sein echtes Master-Passwort beim ersten Besuch.
+  [D] Booking: Settings gespeichert (Slug leon-test, aktiv, Mo-Fr
+      9-17, 30min), oeffentliche Buchung ohne Login durchgefuehrt,
+      Doppelbuchung -> 409 + Slot verschwindet, Termin erschien im
+      Besitzer-Kalender. Test-Termin danach geloescht; Booking-Seite
+      /book/leon-test ist noch AKTIV konfiguriert.
+
+ NAECHSTER SCHRITT: Phase 4 (Gmail-Klon, Cloud-Monitoring Google
+ Drive + MEGA via OAuth2) – braucht vom Nutzer: Google-Cloud-Projekt
+ mit OAuth2-Client (Gmail+Drive-Scopes) und MEGA-Zugang.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 KONTEXT DES ABBRUCHS
 ---------------------------------------------------------------------
 Die Session wurde mitten in Aufgabe "Projektmanagement" gestoppt.

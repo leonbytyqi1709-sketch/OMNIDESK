@@ -23,6 +23,7 @@
     "vite.config.ts",
     "drizzle.config.ts",
     "src/db/client.ts",
-    "server"
+    "server",
+    "api"
   ]
 }

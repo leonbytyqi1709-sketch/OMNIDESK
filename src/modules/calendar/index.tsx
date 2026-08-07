@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { addMonths, format, subMonths } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { CalendarClock, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AppointmentFormDialog } from './components/AppointmentFormDialog'
+import { BookingSettingsDialog } from './components/BookingSettingsDialog'
 import { MonthGrid } from './components/MonthGrid'
 import { useAppointments, type AppointmentDto } from './api'
 
@@ -13,6 +14,7 @@ export default function CalendarPage() {
 
   const [month, setMonth] = useState(() => new Date())
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [bookingOpen, setBookingOpen] = useState(false)
   const [editAppointment, setEditAppointment] = useState<AppointmentDto | null>(
     null,
   )
@@ -66,6 +68,9 @@ export default function CalendarPage() {
               <ChevronRight className="size-4" />
             </Button>
           </div>
+          <Button variant="outline" onClick={() => setBookingOpen(true)}>
+            <CalendarClock className="size-4" /> Booking einrichten
+          </Button>
           <Button
             onClick={() => openCreate(new Date())}
             className="bg-gradient-accent glow text-white"
@@ -100,6 +105,8 @@ export default function CalendarPage() {
         editAppointment={editAppointment}
         initialDate={initialDate}
       />
+
+      <BookingSettingsDialog open={bookingOpen} onOpenChange={setBookingOpen} />
     </div>
   )
 }
