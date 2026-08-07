@@ -1,8 +1,74 @@
 =====================================================================
  OMNIDESK – ENTWICKLUNGSDOKUMENTATION
- Stand: Ende der Entwicklungs-Session vom 17.07.2026
+ Stand: Ende der Entwicklungs-Session vom 07.08.2026
+ (Abschnitt 0 = neuester Stand; Abschnitte 1-7 vom 17.07.2026,
+  Abweichungen dazu sind in Abschnitt 0 vermerkt)
  Spezifikation: omnidesk_spezifikation_v2.pdf (im Projektroot)
 =====================================================================
+
+0. SESSION VOM 07.08.2026 (neues Geraet) – PHASE 3 FERTIGGESTELLT
+---------------------------------------------------------------------
+ERLEDIGT (alles committet + gepusht bis origin/main 2c5c526,
+jeder Schritt mit gruenem Build + Lint verifiziert):
+
+  [x] Umgebung neu aufgesetzt (npm install, .env.local, Neon-Passwort
+      ROTIERT und neuer Connection-String eingetragen)
+  [x] Projektmanagement: Build gruen; E2E BESTANDEN (Projekt-CRUD,
+      Board-Aufgabe durch alle 4 Spalten vor+zurueck, Meilenstein
+      mit Ueberfaellig-Rot angelegt/abgehakt, Loeschen mit Cascade)
+  [x] Befehlsbibliothek: E2E BESTANDEN (Starter-Import 18 Befehle in
+      5 Kategorien, Echtzeit-Suche, Kategorie-Chips, Bearbeiten,
+      Loeschen). Copy-Button: eingebettete Test-Umgebung blockiert
+      die Clipboard-API systemseitig -> kurzer Handtest im normalen
+      Browser empfohlen (Code nutzt Standard-API)
+  [x] Passwort-Manager-FRONTEND KOMPLETT GEBAUT + E2E BESTANDEN:
+      - src/lib/crypto.ts: PBKDF2 (310.000 Iter., SHA-256) ->
+        AES-256-GCM, Base64-Helfer, Schluessel nicht extrahierbar
+      - Setup-/Unlock-Screens, zustand-Store NUR im RAM (Reload
+        sperrt), Kategorie-Tabs Privat/Familie/Kunden, Suche,
+        Copy/Reveal, CRUD-Dialog mit Passwort-Generator, Lock-Button
+      - E2E: falsches Passwort abgelehnt, richtiges entsperrt,
+        in Neon liegt NACHWEISLICH nur Base64-Ciphertext+IV
+      - Test-Vault danach aus DB geloescht -> Nutzer setzt sein
+        echtes Master-Passwort beim naechsten Besuch (NICHT
+        wiederherstellbar!)
+  [x] Booking-FRONTEND KOMPLETT GEBAUT + E2E BESTANDEN:
+      - BrowserRouter nach src/app/App.tsx; /book/:slug rendert VOR
+        dem SignedIn-Gate als eigener Lazy-Chunk (BookingPage.tsx)
+      - Konfig-Dialog im Kalender ("Booking einrichten": Slug, aktiv,
+        Slot-Laenge, Wochentags-Zeiten, URL mit Copy)
+      - E2E: oeffentliche Buchung ohne Login, Doppelbuchung -> 409
+        + Slot verschwindet, Termin erschien im Besitzer-Kalender.
+        Slug "leon-test" ist noch aktiv konfiguriert.
+  [x] PWA: vite-plugin-pwa (autoUpdate), deutsches Manifest
+      (#09090b), Icons 192/512/maskable/apple-touch im Gradient-Look
+      (weisser O-Ring), Service Worker mit App-Shell-Precache
+  [x] Vercel-Vorbereitung: gemeinsame App-Factory server/app.ts,
+      api/[[...route]].ts (hono/vercel), vercel.json (SPA-Rewrites),
+      README komplett neu mit Setup- + Deployment-Anleitung
+  [x] Booking-ZEITZONEN-HAERTUNG: server/timezone.ts rechnet Slots
+      explizit in Europe/Berlin (Intl-API, DST-sicher, ohne neue
+      Dependency). Unter TZ=UTC und TZ=America/New_York verifiziert
+      -> auf Vercel ist KEINE TZ-Env-Variable mehr noetig
+  [x] Kanban-DRAG&DROP im Projektboard (HTML5 DnD, Glow-Highlight
+      der Zielspalte; Pfeil-Buttons bleiben als Fallback)
+  [x] IHK-docx-Dateien aus dem Repo entfernt (gehoeren nicht zum
+      Projekt; in aelterer Git-Historie technisch noch vorhanden)
+
+NOCH ZU TUN (naechste Sessions):
+  1. PHASE 4 laut Spezifikation:
+     - Gmail-Klon (offizielle Gmail-API, Lesen + Antworten im
+       OmniDesk-Design)
+     - Cloud-Monitoring (Google Drive + MEGA, Speicher-Dashboards)
+     VORAUSSETZUNG vom Nutzer: Google-Cloud-Projekt mit
+     OAuth2-Client (Gmail- + Drive-Scopes) und MEGA-Zugang
+  2. Feinschliff: konfigurierbare Dashboard-Widgets, Mobile-Sidebar
+  3. Vercel-Deployment durchfuehren (Nutzer-Aufgabe: Account, Repo
+     importieren, Env-Variablen DATABASE_URL +
+     VITE_CLERK_PUBLISHABLE_KEY setzen; Anleitung im README).
+     Fuer Produktion: Clerk Production-Instance (pk_live_...)
+  4. Kurzer Handtest der Copy-Buttons im normalen Browser
+  5. Passwort-Manager: echtes Master-Passwort setzen (Nutzer)
 
 1. TECHNOLOGIE-STACK
 ---------------------------------------------------------------------
