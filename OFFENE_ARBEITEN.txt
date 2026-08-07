@@ -53,9 +53,20 @@
       Besitzer-Kalender. Test-Termin danach geloescht; Booking-Seite
       /book/leon-test ist noch AKTIV konfiguriert.
 
+ ABENDS ZUSAETZLICH ERLEDIGT (committet + gepusht):
+  - Booking-Zeitzonen-Haertung: server/timezone.ts rechnet Slots
+    explizit in Europe/Berlin (Intl-API, DST-sicher). Unter TZ=UTC
+    und TZ=America/New_York verifiziert -> Vercel-Deploy braucht
+    KEINE TZ-Env-Variable mehr (optional weiterhin moeglich).
+  - Kanban-Drag&Drop im Projektmanagement (HTML5 DnD, Spalten-
+    Highlight beim Ziehen; Pfeil-Buttons bleiben als Fallback).
+    Nutzt dieselbe bereits E2E-getestete Status-Mutation.
+
  NAECHSTER SCHRITT: Phase 4 (Gmail-Klon, Cloud-Monitoring Google
  Drive + MEGA via OAuth2) – braucht vom Nutzer: Google-Cloud-Projekt
  mit OAuth2-Client (Gmail+Drive-Scopes) und MEGA-Zugang.
+ Restlicher Feinschliff laut DOKUMENTATION Abschnitt 6:
+ konfigurierbare Dashboard-Widgets, Mobile-Sidebar.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 KONTEXT DES ABBRUCHS
