@@ -1,0 +1,137 @@
+/*
+ * OmniDesk Theme (Spezifikation V2, Abschnitt 3)
+ * Tailwind v4: Konfiguration erfolgt CSS-basiert über @theme.
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Shadcn-Farbvariablen.
+ * Dark Mode ist der Standard-Look von OmniDesk und bildet die Spec 1:1 ab;
+ * Light dient dem Theme-Umschalter in den Einstellungen (Dark/Light/System).
+ */
+:root {
+  --radius: 0.625rem;
+
+  --background: #fafafa;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #cf0a0a;
+  --destructive-foreground: #fafafa;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #230d8f;
+
+  /* Akzent-Verlauf: Tiefes Königsblau → Tiefes Rot */
+  --gradient-from: #230d8f;
+  --gradient-to: #cf0a0a;
+}
+
+.dark {
+  --background: #09090b; /* Tiefes, augenschonendes Anthrazit */
+  --foreground: #fafafa; /* Knackiges Weiß */
+  --card: #18181b; /* Dunkelgrau zur räumlichen Abhebung */
+  --card-foreground: #fafafa;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa; /* Abgedunkeltes Grau für Beschriftungen */
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #cf0a0a; /* Signal-Farbe für Fehler & Warnungen */
+  --destructive-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #230d8f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-gradient-from: var(--gradient-from);
+  --color-gradient-to: var(--gradient-to);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  /*
+   * Kompakt-Modus (Einstellungen → Erscheinungsbild): Tailwind v4 leitet
+   * alle Abstands-Utilities von --spacing ab – ein kleinerer Basiswert
+   * verdichtet die gesamte Oberfläche.
+   */
+  html[data-compact='true'] {
+    --spacing: 0.2rem;
+  }
+}
+
+/*
+ * OmniDesk-Utilities: Akzent-Verlauf & Neon-Glow (Spec: "Glow-Effekt")
+ * Verwendung: <Button className="bg-gradient-accent glow">…</Button>
+ */
+@utility bg-gradient-accent {
+  background-image: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+}
+
+@utility text-gradient-accent {
+  background-image: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+  background-clip: text;
+  color: transparent;
+}
+
+/* Dezenter Neon-Schatten für aktive Zustände, Buttons und Status-Indikatoren */
+@utility glow {
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--gradient-from) 55%, transparent))
+    drop-shadow(0 0 18px color-mix(in srgb, var(--gradient-to) 30%, transparent));
+}
+
+/* Stärkere Variante, z.B. für Hover auf Primär-Aktionen */
+@utility glow-strong {
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--gradient-from) 75%, transparent))
+    drop-shadow(0 0 26px color-mix(in srgb, var(--gradient-to) 45%, transparent));
+}

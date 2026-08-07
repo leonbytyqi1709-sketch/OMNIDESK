@@ -1,0 +1,162 @@
+=====================================================================
+ OMNIDESK – ENTWICKLUNGSDOKUMENTATION
+ Stand: Ende der Entwicklungs-Session vom 17.07.2026
+ Spezifikation: omnidesk_spezifikation_v2.pdf (im Projektroot)
+=====================================================================
+
+1. TECHNOLOGIE-STACK
+---------------------------------------------------------------------
+- Frontend:   Vite 8 + React 19 + TypeScript (strict), React Router v7
+- UI:         Tailwind CSS v4 (CSS-basierte Config, KEIN tailwind.config.js)
+              + Shadcn/ui (Style "new-york", 20 Komponenten in
+              src/components/ui), Lucide-Icons, Sonner (Toasts)
+- Daten:      TanStack Query (Frontend), Drizzle ORM + Neon Serverless
+              Postgres (Backend), Zod-Validierung
+- Auth:       Clerk (deutsche Lokalisierung, Dark Theme)
+- API:        Hono-Server unter server/ (lokal Port 8787,
+              Vite-Proxy /api -> 8787). JWT-Pruefung gegen den
+              oeffentlichen JWKS-Endpunkt der Clerk-Instanz
+              (KEIN Clerk Secret Key noetig; Domain steckt Base64-
+              kodiert im Publishable Key)
+- State:      zustand (Pomodoro-Timer global, Settings persistiert)
+
+2. START DER ENTWICKLUNGSUMGEBUNG
+---------------------------------------------------------------------
+  npm install
+  npm run dev        (Frontend, Port 5173)
+  npm run dev:api    (API-Server, Port 8787 – ZWEITES Terminal!)
+
+  .env.local (nicht im Repo, muss angelegt werden):
+    VITE_CLERK_PUBLISHABLE_KEY=pk_test_c2hhcnAtcmVkZmlzaC0yMi5jbGVyay5hY2NvdW50cy5kZXYk
+    DATABASE_URL=<Neon-Connection-String, siehe Neon-Dashboard>
+
+  Drizzle-Befehle: npm run db:push | db:generate | db:migrate | db:studio
+
+3. ARCHITEKTUR-GRUNDSAETZE
+---------------------------------------------------------------------
+- Modul-Registry in src/config/modules.ts: Sidebar, Router und
+  Modul-Manager speisen sich NUR aus dieser Liste. Jedes Modul wird
+  per React.lazy als eigener Chunk erst beim ersten Klick geladen.
+- Strikte Modultrennung: src/modules/<id>/ mit index.tsx als einzigem
+  Export (+ components/, hooks/, api/). Module importieren nie
+  Interna anderer Module (Ausnahme: Dashboard-Widgets duerfen die
+  api/-Hooks anderer Module nutzen).
+- Ein Drizzle-Schema pro Modul in src/db/schema/<modul>.ts,
+  Mandantentrennung ueber user_id (Clerk-ID) mit Index.
+- src/db/client.ts ist server-only (wirft im Browser, im
+  tsconfig.app ausgeschlossen).
+- Design-Tokens in src/styles/globals.css: Hintergrund #09090b,
+  Karten #18181b, Text #fafafa, Sekundaer #a1a1aa, Signal #cf0a0a.
+  Utilities: bg-gradient-accent, text-gradient-accent (Verlauf
+  #230d8f -> #cf0a0a), glow, glow-strong (Neon-Schatten).
+  Dark ist Standard (class="dark" auf <html>), Light-Theme vorhanden.
+  Kompakt-Modus: html[data-compact='true'] setzt --spacing kleiner.
+
+4. HEUTE FERTIGGESTELLT (ALLE GETESTET, BUILD GRUEN)
+---------------------------------------------------------------------
+PHASE 1 (komplett):
+  [x] Projekt-Setup, Ordnerstruktur, Pfad-Alias @, strict TS
+  [x] Tailwind v4 + Shadcn + komplettes Farbthema inkl. Glow
+  [x] App-Shell: einklappbare Sidebar (localStorage), Router mit
+      Lazy Loading (13 Chunks), Suspense-Spinner, Profil+Zahnrad
+      im Sidebar-Footer
+  [x] Clerk-Auth: Login-Seite im OmniDesk-Design, geschuetzte App,
+      UserButton in der Sidebar
+  [x] Neon + Drizzle: Tabellen links, notes (spaeter + tasks,
+      contacts, appointments, commands, projects, project_tasks,
+      milestones, vaults, vault_entries, booking_settings)
+  [x] Link-Manager: Karten-Grid nach Kategorien, Favicons, Suche,
+      CRUD-Dialoge, Kontextmenue
+  [x] Notiz-Editor: 2-Spalten (Liste+Editor), Markdown-Vorschau
+      (react-markdown + remark-gfm + typography), Autosave 800ms
+      mit Flush bei Wechsel, Volltextsuche
+
+PHASE 2 (komplett):
+  [x] Dashboard: Bento-Grid mit 6 Widgets (Begruessung+Live-Uhr,
+      Pomodoro-Mini mit Start/Pause, offene Aufgaben, naechste
+      Termine, letzte Notizen, Link-Schnellzugriff)
+  [x] Task-Tool: Listen-/Kanban-Ansicht (persistiert), Prioritaeten
+      Hoch/Mittel/Niedrig, Faelligkeit mit Ueberfaellig-Rot,
+      Statuswechsel per Pfeil/Checkbox
+  [x] Pomodoro: 25/5, globaler zustand-Store (laeuft beim
+      Modulwechsel weiter), SVG-Fortschrittsring im Gradient
+  [x] Kontakte: Tabelle mit Suche, Avatar-Initialen, mailto/tel-
+      Links, CRUD-Dialog
+  [x] Kalender: Monats-Grid (Mo-Start, de-Lokalisierung), Termin-
+      Chips in Prioritaetsfarben, Tag-Klick = neuer Termin,
+      Chip-Klick = Bearbeiten/Loeschen
+  [x] Einstellungen: 4 Tabs
+      - Allgemein: Clerk-Profil, JSON-Backup EXPORT + IMPORT
+        (alle 5 Datenmodule)
+      - Erscheinungsbild: Dark/Light/System (next-themes),
+        Kompakt-Modus
+      - Integrationen: Platzhalter Google/MEGA (Phase 4)
+      - Modul-Manager: Toggles, Sidebar filtert (zustand persist)
+
+PHASE 3 (heute begonnen):
+  [x] Befehlsbibliothek KOMPLETT: Schema, CRUD+Bulk-API, UI mit
+      Echtzeit-Suche, Kategorie-Filter-Chips, Copy-Button,
+      Starter-Bibliothek (18 kuratierte Befehle) - Build gruen,
+      E2E-Test steht noch aus (Browser-Session war ausgeloggt)
+  [~] Projektmanagement: Schema + komplette API FERTIG
+      (projects/project_tasks/milestones, verschachtelte Routen),
+      Frontend-Dateien geschrieben (Uebersicht + Board mit 4
+      Spalten + Meilenstein-Panel) - ABER: letzter Build/Test
+      wurde unterbrochen, NICHT VERIFIZIERT
+  [~] Passwort-Manager: Schema (vaults + vault_entries) und
+      Server-Route FERTIG (Server speichert nur Base64-Ciphertext).
+      Frontend (Web Crypto: PBKDF2 + AES-256-GCM, Unlock-Screen,
+      Eintraege) NOCH NICHT GEBAUT
+  [~] Booking: Schema (booking_settings mit Slug, Slot-Laenge,
+      Wochen-Verfuegbarkeit) + authentifizierte Settings-Route +
+      OEFFENTLICHE API (/api/public/booking/:slug, /slots, /book
+      mit Slot-Berechnung + Kollisionspruefung) FERTIG.
+      Frontend (Konfig-UI im Kalender + oeffentliche Seite
+      /book/:slug ausserhalb des Logins) NOCH NICHT GEBAUT
+
+5. UNTERWEGS GEFUNDENE + BEHOBENE BUGS
+---------------------------------------------------------------------
+- Radix TooltipTrigger (asChild) stringifiziert className-FUNKTIONEN
+  von NavLink -> Aktiv-Zustand selbst berechnen, String uebergeben
+- Zod: .partial() + .default() setzt fehlende Felder auf Defaults
+  zurueck (Task-Update loeschte Faelligkeitsdatum) -> Schemas fuer
+  partielle Updates OHNE .default() definieren
+- localStorage.setItem im setState-Updater (StrictMode doppelt)
+  -> in useEffect verschoben
+- Horizontaler Overflow bei schmalem Fenster -> main hat
+  overflow-x-auto, Sidebar bleibt stehen
+- Browser-Pane-Konsole puffert ueber Reloads: "Invalid hook call"
+  nach HMR ist STALE -> mit Inline-Skript-Zaehler verifizieren
+
+6. NOCH ZU TUN (Reihenfolge empfohlen)
+---------------------------------------------------------------------
+  1. Projektmanagement: Build + E2E-Test (Code liegt komplett vor)
+  2. Befehlsbibliothek: E2E-Test (eingeloggt)
+  3. Passwort-Manager-Frontend: src/lib/crypto.ts (PBKDF2 310k
+     Iterationen SHA-256, AES-256-GCM, Base64-Helfer), Unlock/
+     Setup-Screen, Eintragsliste mit Kategorien Privat/Familie/
+     Kunden, Copy/Reveal, Session-Key nur im Speicher
+  4. Booking-Frontend: Konfig (Slug, Slots, Verfuegbarkeit) +
+     oeffentliche Route /book/:slug (App.tsx: Route VOR dem
+     SignedIn-Gate) mit Tag->Slot->Formular->Bestaetigung
+  5. PWA: vite-plugin-pwa, Manifest, Icons (Gradient-Look), SW
+  6. Vercel: Hono-Adapter unter api/, vercel.json, Env-Variablen
+  7. Phase 4: Gmail-API + Cloud-Monitoring (Google Drive/MEGA)
+     ueber OAuth2 - braucht Google-Cloud-Projekt + MEGA-Zugang
+  8. Feinschliff: Kanban-Drag&Drop, konfigurierbare Widgets,
+     Mobile-Sidebar, Booking-Zeitzonen (Vercel laeuft auf UTC!)
+
+7. AUFGABEN FUER DEN PROJEKTINHABER (nur du kannst das)
+---------------------------------------------------------------------
+  [ ] Neon: Datenbank-Passwort ROTIEREN (Connection String stand
+      im Chat!) und neuen String in .env.local eintragen
+  [ ] Clerk: fuer Produktion eine Production-Instance anlegen
+      (pk_live_...) und Domain hinterlegen
+  [ ] Google Cloud: Projekt anlegen, OAuth2-Client erstellen
+      (fuer Gmail + Drive, Phase 4), Client-ID/Secret bereitstellen
+  [ ] MEGA: Account/API-Zugang fuer Cloud-Monitoring
+  [ ] Vercel: Account anlegen, Repo importieren, Env-Variablen
+      setzen (DATABASE_URL, VITE_CLERK_PUBLISHABLE_KEY)
+  [ ] GitHub: Repo-Zugriff/Collaborators nach Bedarf
+
+=====================================================================
