@@ -7,6 +7,7 @@ import {
   bookingSettings,
   type WeekAvailability,
 } from '../../src/db/schema/index.ts'
+import { nextDate, weekdayOfDate, zonedDateTime } from '../timezone.ts'
 
 const WEEKDAY_KEYS: (keyof WeekAvailability)[] = [
   'sun',
@@ -29,13 +30,13 @@ async function activeSettingsBySlug(slug: string) {
   return settings
 }
 
-/** Alle Slot-Startzeiten (Minuten seit Mitternacht) eines Tages laut Verfügbarkeit. */
+/** Alle Slot-Startzeiten (Minuten seit Mitternacht, Europe/Berlin) laut Verfügbarkeit. */
 function daySlots(
   availability: WeekAvailability,
   slotMinutes: number,
-  date: Date,
+  dateStr: string,
 ): number[] {
-  const day = availability[WEEKDAY_KEYS[date.getDay()]]
+  const day = availability[WEEKDAY_KEYS[weekdayOfDate(dateStr)]]
   if (!day.enabled) return []
   const [fromH, fromM] = day.from.split(':').map(Number)
   const [toH, toM] = day.to.split(':').map(Number)
@@ -76,8 +77,9 @@ publicBookingRoute.get('/:slug/slots', async (c) => {
   if (!dateStr || !datePattern.test(dateStr)) {
     return c.json({ error: 'Parameter date (YYYY-MM-DD) fehlt' }, 400)
   }
-  const dayStart = new Date(`${dateStr}T00:00:00`)
-  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000)
+  // Tagesgrenzen explizit in Europe/Berlin (Vercel läuft auf UTC!)
+  const dayStart = zonedDateTime(dateStr, 0)
+  const dayEnd = zonedDateTime(nextDate(dateStr), 0)
 
   // Bestehende Termine des Besitzers an diesem Tag (nur Zeiten, keine Inhalte)
   const busy = await db
@@ -95,9 +97,9 @@ publicBookingRoute.get('/:slug/slots', async (c) => {
   const free = daySlots(
     settings.availability,
     settings.slotMinutes,
-    dayStart,
+    dateStr,
   ).filter((minutes) => {
-    const slotStart = new Date(dayStart.getTime() + minutes * 60_000)
+    const slotStart = zonedDateTime(dateStr, minutes)
     const slotEnd = new Date(slotStart.getTime() + settings.slotMinutes * 60_000)
     if (slotStart <= now) return false
     return !busy.some((b) => slotStart < b.endsAt && slotEnd > b.startsAt)
@@ -124,16 +126,16 @@ publicBookingRoute.post('/:slug/book', async (c) => {
   }
   const { date, time, name, email, topic } = parsed.data
 
-  const startsAt = new Date(`${date}T${time}:00`)
+  const [h, m] = time.split(':').map(Number)
+  const startsAt = zonedDateTime(date, h * 60 + m)
   const endsAt = new Date(startsAt.getTime() + settings.slotMinutes * 60_000)
 
   // Slot muss laut Verfügbarkeit existieren …
-  const dayStart = new Date(`${date}T00:00:00`)
-  const [h, m] = time.split(':').map(Number)
+  const dayStart = zonedDateTime(date, 0)
   const validSlot = daySlots(
     settings.availability,
     settings.slotMinutes,
-    dayStart,
+    date,
   ).includes(h * 60 + m)
   if (!validSlot || startsAt <= new Date()) {
     return c.json({ error: 'Dieser Slot ist nicht buchbar' }, 400)
@@ -147,7 +149,7 @@ publicBookingRoute.post('/:slug/book', async (c) => {
       and(
         eq(appointments.userId, settings.userId),
         gte(appointments.startsAt, dayStart),
-        lt(appointments.startsAt, new Date(dayStart.getTime() + 86_400_000)),
+        lt(appointments.startsAt, zonedDateTime(nextDate(date), 0)),
       ),
     )
   if (busy.some((b) => startsAt < b.endsAt && endsAt > b.startsAt)) {

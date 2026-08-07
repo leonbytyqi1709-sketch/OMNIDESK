@@ -67,10 +67,10 @@ Das Repo ist Vercel-ready: `api/[[...route]].ts` bedient alle `/api/*`-Routen
    | --- | --- |
    | `DATABASE_URL` | Neon-Connection-String |
    | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk Publishable Key (für Produktion `pk_live_…`) |
-   | `TZ` | `Europe/Berlin` – **wichtig fürs Booking!** |
-3. **Zeitzone:** Die Booking-Slot-Berechnung nutzt die Server-Lokalzeit.
-   Vercel läuft standardmäßig auf UTC – ohne `TZ=Europe/Berlin` wären
-   öffentliche Buchungen um 1–2 Stunden verschoben.
+   | `TZ` | optional `Europe/Berlin` (nicht mehr zwingend, s.u.) |
+3. **Zeitzone:** Die Booking-Slot-Berechnung rechnet seit `server/timezone.ts`
+   explizit in `Europe/Berlin` (DST-sicher über die Intl-API) und ist damit
+   unabhängig von der Server-Zeitzone – auch auf Vercel (UTC) korrekt.
 4. Clerk: In der Clerk-Konsole die Vercel-Domain als erlaubte Domain
    eintragen (für Produktion eine Production-Instance mit `pk_live_…`).
 5. Nach dem ersten Deploy prüfen: Login, ein Modul mit Datenbankzugriff
