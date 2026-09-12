@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { UserButton, useUser } from '@clerk/clerk-react'
-import { Menu } from 'lucide-react'
+import { Menu, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useCommandPaletteStore } from '@/stores/command-palette'
 import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
@@ -31,6 +32,7 @@ export function MobileHeader() {
   const { user } = useUser()
   const disabledModules = useSettingsStore((s) => s.disabledModules)
   const settingsModule = moduleRegistry.find((m) => m.id === 'settings')!
+  const openCommandPalette = useCommandPaletteStore((s) => s.open)
 
   const displayName =
     user?.fullName ??
@@ -144,7 +146,16 @@ export function MobileHeader() {
         </span>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-9 text-muted-foreground hover:text-foreground"
+          onClick={openCommandPalette}
+          aria-label="Command-Palette öffnen"
+        >
+          <Search className="size-4" />
+        </Button>
         <UserButton
           appearance={{
             elements: { avatarBox: 'size-7' },

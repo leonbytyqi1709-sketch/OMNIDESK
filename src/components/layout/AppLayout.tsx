@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Outlet } from 'react-router'
 import { useSettingsStore } from '@/stores/settings'
+import { CommandPalette } from './CommandPalette'
 import { MobileHeader } from './MobileHeader'
 import { ModuleLoader } from './ModuleLoader'
 import { Sidebar } from './Sidebar'
@@ -37,6 +38,9 @@ export function AppLayout() {
           <Outlet />
         </Suspense>
       </main>
+
+      {/* Globale Command-Palette (Strg + K / Cmd + K) */}
+      <CommandPalette />
     </div>
   )
 }

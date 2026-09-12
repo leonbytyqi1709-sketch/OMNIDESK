@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router'
 import { UserButton, useUser } from '@clerk/clerk-react'
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { moduleRegistry, type ModuleDefinition } from '@/config/modules'
+import { useCommandPaletteStore } from '@/stores/command-palette'
 import { useSettingsStore } from '@/stores/settings'
 import { cn } from '@/lib/utils'
 
@@ -77,6 +78,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     user?.primaryEmailAddress?.emailAddress ??
     'Unbekannt'
 
+  const openCommandPalette = useCommandPaletteStore((s) => s.open)
+
   return (
     <TooltipProvider delayDuration={100}>
       <aside
@@ -109,6 +112,39 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <PanelLeftClose className="size-4" />
             )}
           </Button>
+        </div>
+
+        {/* Command-Palette Schnellzugriff (Strg + K) */}
+        <div className="p-2 border-b border-border/40">
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={openCommandPalette}
+                  className="flex size-10 w-full items-center justify-center rounded-md border border-border/60 bg-secondary/30 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  aria-label="Command-Palette öffnen (Strg + K)"
+                >
+                  <Search className="size-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Befehle & Suche (Strg + K)</TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              type="button"
+              onClick={openCommandPalette}
+              className="flex w-full items-center justify-between rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-border hover:bg-secondary/60 hover:text-foreground"
+            >
+              <div className="flex items-center gap-2">
+                <Search className="size-3.5 text-primary" />
+                <span className="truncate">Befehle & Suche...</span>
+              </div>
+              <kbd className="rounded border border-border/80 bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">
+                Strg K
+              </kbd>
+            </button>
+          )}
         </div>
 
         {/* Modul-Navigation (aus der zentralen Registry) */}
