@@ -6,7 +6,57 @@
 =====================================================================
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- UPDATE 12.09.2026 (Fortsetzung Session)
+ UPDATE 12.09.2026 (Nachmittags-Session: Google OAuth2 & MEGA Live)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ERLEDIGT:
+  - Vollstaendiger Google OAuth2 Flow integriert:
+    * server/google-auth.ts: URL-Generator mit Scopes (Drive & Gmail),
+      Code-Exchange & automatischer Token-Refresh via getValidGoogleAccessToken()
+    * server/routes/google-callback.ts: Oeffentliche Route /api/integrations/google/callback
+      mit Profil- und Google Drive Quota-Abruf, Speicherung in Neon DB
+      und dynamischem Redirect mit Parametern
+    * server/routes/integrations.ts: Neuer Endpunkt GET /api/integrations/google/auth-url
+    * server/routes/mail.ts: Automatischer Token-Refresh bei Mail-Abruf
+      und echter Versand via Gmail API (RFC 2822 base64url)
+    * Frontend: Direkter "Mit Google verbinden"-Button in IntegrationsTab &
+      AddAccountDialog, Rueckkehr-Feedback via Sonner Toasts
+
+  - Vollstaendige Live-MEGA-Cloud-Anbindung:
+    * megajs SDK & @types/megajs installiert
+    * server/mega-auth.ts: connectMegaAccount() fuer Live-Authentifizierung,
+      Abruf der echten Speicherauslastung (spaceUsed, spaceTotal, filesCount)
+      und sichere Sitzungsspeicherung (kein Klartext-Passwort persistent!)
+    * server/mega-auth.ts: syncMegaAccount() fuer Live-Synchronisation der Sitzung
+    * server/routes/integrations.ts: POST /accounts unterstuetzt optionales
+      Passwort fuer Live-Login; POST /accounts/:id/sync aktualisiert Quota
+    * Frontend: AddAccountDialog mit optionalem MEGA-Passwortfeld;
+      IntegrationsTab & AccountCard mit synchronisierendem Ladeindikator
+
+  - Globale Command-Palette (Strg + K / Cmd + K) aktiv im Layout
+
+  - Laufende Dev-Umgebung & Verifikation:
+    * Vite Frontend (Port 5173) & Hono API (Port 8787) laufen stabil
+    * Vite Proxy (/api -> :8787) verifiziert
+    * npm run build: 100% gruen, PWA Service-Worker generiert
+    * npm run lint: 100% gruen (0 Fehler)
+    * Git-Commit gesichert: 8dd42c0 auf Branch main
+
+ NAECHSTE SCHRITTE & VERBESSERUNGSIDEEN:
+  1. Live-Test durch Nutzer:
+     - Google OAuth-Button in Einstellungen -> Integrationen testen
+     - Echtes Google- oder MEGA-Konto verknuepfen und Quota-Balken pruefen
+  2. Vercel-Deployment:
+     - Auf Vercel deployen (DATABASE_URL, VITE_CLERK_PUBLISHABLE_KEY,
+       GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI)
+  3. Weitere Verbesserungsideen:
+     - Dashboard Widget fuer Cloud-Storage (Bento-Grid Widget)
+     - Drag & Drop Datei-Upload zu Google Drive / MEGA
+     - E-Mail Entwuerfe (Drafts) & Anhaenge im Gmail-Klon
+     - Offline-Sync mit IndexedDB fuer Notizen & Tasks
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ UPDATE 12.09.2026 (Vormittags-Session)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  ERLEDIGT:
   - Konfigurierbare Dashboard-Widgets KOMPLETT umgesetzt:

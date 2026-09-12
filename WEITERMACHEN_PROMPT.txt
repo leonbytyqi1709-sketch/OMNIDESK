@@ -1,33 +1,34 @@
 =====================================================================
- PROMPT FUER CLAUDE CODE (neuer Account) – einfach komplett einfuegen
+ PROMPT FUER CLAUDE / KI-ASSISTENT – einfach komplett einfuegen
+ Stand: 12.09.2026 (Phase 1 bis 4 + OAuth2/MEGA vollständig fertig)
 =====================================================================
 
 Ich arbeite am Projekt OmniDesk – einer modularen All-in-One-
 Produktivitaets-Webapp fuer IT-Profis (Spezifikation liegt als
-omnidesk_spezifikation_v2.pdf im Projektroot, bitte zuerst lesen).
+omnidesk_spezifikation_v2.pdf im Projektroot).
 Das Repository: https://github.com/leonbytyqi1709-sketch/OMNIDESK.git
 
-WICHTIG – lies zuerst diese drei Dateien im Projektroot:
+WICHTIG – lies zuerst diese Dateien im Projektroot:
   1. DOKUMENTATION.txt  (kompletter Entwicklungsstand, Architektur,
-     bekannte Bugs/Loesungen, offene Punkte)
-  2. OFFENE_ARBEITEN.txt  (DETAILLIERTE Uebergabe der unterbrochenen
-     Arbeiten: exakter Datei-Stand, fertige API-Endpunkte, praezise
-     naechste Schritte pro Aufgabe – deine eigentliche Arbeitsliste!)
-  3. omnidesk_spezifikation_v2.pdf  (die fachliche Spezifikation)
+     Session-Logs)
+  2. OFFENE_ARBEITEN.txt  (detaillierte Uebergabe: exakter Stand,
+     naechste Schritte, Ideen)
+  3. omnidesk_spezifikation_v2.pdf  (fachliche Spezifikation)
 
 STACK: Vite 8 + React 19 + TypeScript strict, Tailwind v4 (CSS-Config
 in src/styles/globals.css, kein tailwind.config.js), Shadcn/ui,
 React Router v7 (Lazy Loading ueber src/config/modules.ts),
 TanStack Query, Clerk (Auth), Drizzle ORM + Neon Postgres,
-Hono-API-Server unter server/ (Port 8787, Vite-Proxy /api).
+Hono-API-Server unter server/ (Port 8787, Vite-Proxy /api),
+megajs fuer MEGA Cloud Storage.
 
-SETUP NACH DEM KLONEN:
-  1. npm install
-  2. Datei .env.local im Projektroot anlegen:
-       VITE_CLERK_PUBLISHABLE_KEY=pk_test_c2hhcnAtcmVkZmlzaC0yMi5jbGVyay5hY2NvdW50cy5kZXYk
-       DATABASE_URL=<trage ich selbst ein – Neon-Dashboard>
-  3. npm run db:push   (Schema nach Neon syncen)
-  4. Zwei Terminals: npm run dev  UND  npm run dev:api
+START DER ENTWICKLUNGSUMGEBUNG:
+  1. Zwei Terminals:
+     Terminal 1: npm run dev        (Frontend, Port 5173)
+     Terminal 2: npm run dev:api    (Hono API, Port 8787)
+  2. .env.local ist bereits vollstaendig konfiguriert
+     (VITE_CLERK_PUBLISHABLE_KEY, DATABASE_URL, GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI).
 
 REGELN (unveraendert einhalten):
   - Farbthema strikt: Hintergrund #09090b, Kacheln #18181b, Text
@@ -36,60 +37,35 @@ REGELN (unveraendert einhalten):
     glow, glow-strong. Nur Shadcn-Komponenten verwenden.
   - Strikte Modultrennung: jedes Modul unter src/modules/<id>/ mit
     index.tsx als einzigem Export; neue Module NUR ueber die
-    Registry src/config/modules.ts anmelden (Route+Sidebar+Toggle
-    entstehen automatisch). Ein Drizzle-Schema pro Modul in
-    src/db/schema/, immer mit user_id-Spalte + Index.
-  - API: neue Hono-Route unter server/routes/, in server/index.ts
-    mounten (oeffentliche Routen VOR der requireAuth-Middleware).
-    Zod-Validierung; bei .partial()-Updates KEINE .default()s.
-  - Jede Aenderung mit npm run build verifizieren und Module im
-    Browser end-to-end testen (Dev-Server + eingeloggter User).
-  - UI-Texte auf Deutsch. Toasts fuer Erfolg/Fehler.
+    Registry src/config/modules.ts anmelden. Ein Drizzle-Schema
+    pro Modul in src/db/schema/, immer mit user_id + Index.
+  - Jede Aenderung mit npm run build verifizieren (muss 100% gruen sein).
+  - UI-Texte auf Deutsch. Toasts (Sonner) fuer Erfolg/Fehler.
 
-AKTUELLER STAND: Phase 1 + 2 komplett fertig und getestet
-(Dashboard mit 6 Widgets, Notizen, Links, Tasks, Pomodoro, Kontakte,
-Kalender, Einstellungen inkl. Modul-Manager). Von Phase 3:
-Befehlsbibliothek fertig (E2E-Test offen), Projektmanagement-Code
-komplett geschrieben aber NICHT verifiziert (Build+Test ausstehend),
-Passwort-Manager und Booking: Backend/Schema fertig, Frontend fehlt.
+AKTUELLER STAND (ALLES FERTIGGESTELLT & GETESTET):
+  - Phase 1: Core, Layout, Clerk-Auth, DB-Setup, Links, Notizen.
+  - Phase 2: Dashboard mit Bento-Grid, Tasks (Kanban/Liste), Pomodoro,
+    Kontakte, Kalender, Einstellungen.
+  - Phase 3: Befehlsbibliothek, Projektmanagement mit DnD,
+    Passwort-Manager (PBKDF2/AES-256-GCM), Booking-System (/book/:slug),
+    PWA (Service Worker, Manifest), Vercel-Adapter (api/[[...route]].ts).
+  - Phase 4: Gmail-Klon, Cloud-Monitoring (Drive & MEGA), Multi-Account.
+  - Feinschliff: Konfigurierbare Dashboard-Widgets (Drag & Drop, Dialog),
+    Mobile-Responsive Navigation (Drawer Sheet), Globale Command-Palette
+    (Strg + K / Cmd + K).
+  - Live OAuth2 & MEGA: Google OAuth Flow (URL-Generator, Callback,
+    Quota-Sync, Auto-Refresh-Token, Gmail API Versand), Live MEGA Cloud
+    Anbindung via megajs mit Quota-Sync & sicherer Sitzungsspeicherung.
+  - Verifikation: npm run build (0 Fehler), npm run lint (0 Fehler).
 
-DEINE NAECHSTEN AUFGABEN IN DIESER REIHENFOLGE:
-  1. npm run build ausfuehren; Projektmanagement-Modul im Browser
-     testen (Projekt anlegen, Board-Aufgaben verschieben,
-     Meilensteine abhaken) und Fehler beheben
-  2. Befehlsbibliothek E2E testen (Starter-Import, Suche, Copy)
-  3. Passwort-Manager-Frontend: Client-seitige Krypto in
-     src/lib/crypto.ts (Web Crypto API: PBKDF2, 310000 Iterationen,
-     SHA-256 -> AES-256-GCM; Base64-Helfer). Ablauf: /api/vault/meta
-     null -> Setup-Screen (Master-Passwort setzen, Salt+Verifier
-     hochladen); sonst Unlock-Screen (Verifier entschluesseln =
-     Passwort-Check). Schluessel NUR im Speicher (zustand), nie
-     persistieren. Eintraege {title, username, password, url, notes}
-     als JSON verschluesseln -> POST /api/vault/entries
-     {category, ciphertext, iv}. Kategorien: privat/familie/kunden.
-     UI: Liste mit Suche+Kategorie-Tabs, Copy-Buttons, Reveal,
-     Lock-Button. Anzeige-Erwartung: Passwoerter maskiert.
-  4. Booking-Frontend: (a) Konfigurations-UI im Kalender-Modul
-     (Slug, aktiv, Slot-Minuten, Wochentags-Zeiten) gegen
-     /api/booking/settings; (b) OEFFENTLICHE Seite /book/:slug –
-     in src/app/App.tsx eine Route VOR dem SignedIn-Gate einbauen,
-     Seite nutzt /api/public/booking/:slug (+ /slots?date=, /book),
-     Ablauf: Tag waehlen -> freie Slots -> Name/E-Mail/Anliegen ->
-     Buchung -> Bestaetigung. OmniDesk-Design, aber ohne Sidebar.
-  5. PWA: vite-plugin-pwa (Manifest de, Theme #09090b, Icons im
-     Gradient-Look generieren, registerType autoUpdate)
-  6. Vercel-Deployment vorbereiten: api/-Ordner mit Hono-Vercel-
-     Adapter (hono/vercel), vercel.json (SPA-Rewrites), README-
-     Abschnitt Deployment. Achtung: Booking-Slotberechnung nutzt
-     Serverzeit – auf Vercel (UTC) Zeitzone Europe/Berlin beachten!
-  7. Danach Phase 4 laut Spezifikation (Gmail-Klon, Cloud-
-     Monitoring Google Drive + MEGA via OAuth2) – dafuer frage
-     mich nach Google-OAuth-Credentials.
+DEINE NAECHSTEN SCHRITTE / ARBEITSAUFTRAG:
+  1. Beide Dev-Server pruefen (npm run dev & npm run dev:api).
+  2. Google OAuth2 Flow und MEGA Live-Sync im Browser verifizieren
+     (unter /settings -> Integrationen oder im Cloud-Monitoring).
+  3. Vercel-Deployment unterstuetzen oder automatisieren.
+  4. Weitere Optimierungsideen gemaess Nutzerabsprache umsetzen
+     (z. B. Cloud-Storage Dashboard-Widget, Datei-Upload, Notizen-Sync).
 
-BEKANNTE STOLPERFALLEN (Details in DOKUMENTATION.txt, Abschnitt 5):
-Radix-asChild vs. className-Funktionen; zod partial+default;
-StrictMode-Doppelaufrufe; Browser-Konsole puffert alte Fehler.
-
-Bestaetige kurz, dass du Doku + Spezifikation gelesen hast, und
-starte dann direkt mit Aufgabe 1.
+Bestaetige kurz den Stand und frage den Nutzer, welche Aufgabe er
+als naechstes angehen moechte.
 =====================================================================

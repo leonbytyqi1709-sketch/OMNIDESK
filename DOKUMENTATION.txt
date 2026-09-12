@@ -6,7 +6,35 @@
  Spezifikation: omnidesk_spezifikation_v2.pdf (im Projektroot)
 =====================================================================
 
-0. SESSION VOM 07.08.2026 (neues Geraet) – PHASE 3 FERTIGGESTELLT
+0. SESSION VOM 12.09.2026 – PHASE 4, FEINSCHLIFF & LIVE-OAUTH/MEGA VOLLENDET
+---------------------------------------------------------------------
+ERLEDIGT (alle Builds gruen, 0 Lint-Fehler, Dev-Server aktiv):
+  [x] Konfigurierbare Dashboard-Widgets (Zustand, Drag & Drop, Dialog,
+      intelligente Modul-Kopplung bei Inaktivierung)
+  [x] Mobile-Navigation & Responsive Design (MobileHeader, Sheet-Drawer)
+  [x] Globale Command-Palette (Strg + K / Cmd + K fuer schnelle Navigation,
+      Modul-Wechsel und Pomodoro-Steuerung)
+  [x] Phase 4 Vollendung:
+      - Multi-Account Drizzle Schema (connected_accounts) in Neon DB
+      - Vollstaendiger Google OAuth2 Flow (URL-Generator mit Scopes,
+        Callback-Route /api/integrations/google/callback, Drive Quota-Abruf,
+        automatischer Token-Refresh via getValidGoogleAccessToken)
+      - Echter Gmail API Versand (RFC 2822 base64url) & Mail-Abruf
+      - Live MEGA Cloud Anbindung via megajs (Sitzungsspeicherung ohne
+        Klartext-Passwoerter, Live Quota-Sync & Dateien-Zaehler)
+      - Einstellungen Integrationen-Tab & Cloud-Monitoring mit
+        Sync-Buttons je Account und Toast-Feedback
+
+NOCH ZU TUN:
+  1. Live-Test durch Nutzer:
+     - Google OAuth-Button in Einstellungen -> Integrationen testen
+     - Echtes Google- oder MEGA-Konto verknuepfen und Quota pruefen
+  2. Vercel-Deployment durchfuehren (Nutzer-Aufgabe: Repo importieren,
+     Env-Variablen DATABASE_URL, VITE_CLERK_PUBLISHABLE_KEY,
+     GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI setzen)
+  3. Passwort-Manager: echtes Master-Passwort setzen (Nutzer)
+
+0b. SESSION VOM 07.08.2026 – PHASE 3 FERTIGGESTELLT
 ---------------------------------------------------------------------
 ERLEDIGT (alles committet + gepusht bis origin/main 2c5c526,
 jeder Schritt mit gruenem Build + Lint verifiziert):
