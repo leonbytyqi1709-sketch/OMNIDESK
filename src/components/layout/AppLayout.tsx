@@ -25,7 +25,13 @@ export function AppLayout() {
   const toggleSidebar = () => setCollapsed((prev) => !prev)
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="relative flex min-h-screen flex-col md:flex-row bg-background">
+      {/* Subtile ambient-glow Sphären für High-End Tiefenwirkung */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0 select-none">
+        <div className="absolute -top-32 right-1/4 h-[550px] w-[550px] rounded-full bg-gradient-to-br from-[#230d8f]/12 via-[#cf0a0a]/6 to-transparent blur-3xl" />
+        <div className="absolute top-2/3 -left-32 h-[450px] w-[450px] rounded-full bg-gradient-to-tr from-[#230d8f]/8 via-transparent to-transparent blur-3xl" />
+      </div>
+
       {/* Desktop Sidebar (wird unterhalb von md ausgeblendet) */}
       <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
 
@@ -33,7 +39,7 @@ export function AppLayout() {
       <MobileHeader />
 
       {/* Hauptinhalt */}
-      <main className="min-w-0 flex-1 overflow-x-auto">
+      <main className="relative z-1 min-w-0 flex-1 overflow-x-auto">
         <Suspense fallback={<ModuleLoader />}>
           <Outlet />
         </Suspense>

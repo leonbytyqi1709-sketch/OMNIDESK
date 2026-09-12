@@ -22,15 +22,20 @@ export function WidgetCard({
   children,
 }: WidgetCardProps) {
   return (
-    <Card className={cn('gap-3 py-4', className)}>
+    <Card
+      className={cn(
+        'gap-3 py-4 card-hover-glow glass-card group/widget',
+        className,
+      )}
+    >
       <CardHeader className="flex flex-row items-center justify-between px-4">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Icon className="size-4" /> {title}
+        <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover/widget:text-foreground transition-colors">
+          <Icon className="size-4 text-primary" /> {title}
         </CardTitle>
         {to && (
           <NavLink
             to={to}
-            className="text-muted-foreground transition-colors hover:text-foreground"
+            className="text-muted-foreground transition-all duration-200 group-hover/widget:translate-x-0.5 group-hover/widget:text-primary hover:text-foreground"
             aria-label={`${title} öffnen`}
           >
             <ArrowRight className="size-4" />

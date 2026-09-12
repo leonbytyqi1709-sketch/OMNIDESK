@@ -23,11 +23,20 @@ export function GreetingWidget({ className }: { className?: string }) {
   const name = user?.firstName ?? user?.username ?? ''
 
   return (
-    <Card className={cn('relative justify-center overflow-hidden h-full', className)}>
-      {/* Dezenter Gradient-Schimmer im Hintergrund */}
+    <Card
+      className={cn(
+        'relative justify-center overflow-hidden h-full glass-card border-primary/25 shadow-lg shadow-primary/5',
+        className,
+      )}
+    >
+      {/* Dezente Gradient-Auras im Hintergrund */}
       <div
         aria-hidden
-        className="bg-gradient-accent absolute -top-24 -right-24 size-64 rounded-full opacity-20 blur-3xl"
+        className="bg-gradient-accent absolute -top-16 -right-16 size-80 rounded-full opacity-25 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="bg-gradient-accent absolute -bottom-24 -left-24 size-64 rounded-full opacity-15 blur-3xl"
       />
       <CardContent className="relative">
         <p className="text-sm text-muted-foreground">

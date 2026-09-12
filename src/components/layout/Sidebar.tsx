@@ -46,14 +46,14 @@ function SidebarLink({
     <NavLink
       to={module.path}
       className={cn(
-        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
         isActive
-          ? 'bg-gradient-accent glow text-white'
-          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+          ? 'bg-gradient-accent glow-strong text-white font-semibold shadow-md shadow-primary/20'
+          : 'text-muted-foreground hover:bg-accent/70 hover:text-foreground',
         collapsed && 'justify-center px-2',
       )}
     >
-      <module.icon className="size-4 shrink-0" />
+      <module.icon className={cn('size-4 shrink-0', isActive && 'text-white')} />
       {!collapsed && <span className="truncate">{module.title}</span>}
     </NavLink>
   )
@@ -84,7 +84,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     <TooltipProvider delayDuration={100}>
       <aside
         className={cn(
-          'sticky top-0 hidden md:flex h-screen shrink-0 flex-col border-r bg-card transition-[width] duration-200',
+          'sticky top-0 hidden md:flex h-screen shrink-0 flex-col border-r border-border/60 bg-card/85 backdrop-blur-xl shadow-2xl transition-[width] duration-200 z-20',
           collapsed ? 'w-16' : 'w-64',
         )}
       >
