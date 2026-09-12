@@ -25,14 +25,19 @@ ERLEDIGT (alle Builds gruen, 0 Lint-Fehler, Dev-Server aktiv):
       - Einstellungen Integrationen-Tab & Cloud-Monitoring mit
         Sync-Buttons je Account und Toast-Feedback
 
+  [x] Live-Test ERFOLGREICH abgeschlossen:
+      - 2 Google Drive & Gmail Konten per OAuth2 verbunden
+      - 1 MEGA Cloud Konto (30 GB) per Live-Sitzung verbunden
+      - Cloud-Monitoring & Quotas laufen 100% synchron
+
 NOCH ZU TUN:
-  1. Live-Test durch Nutzer:
-     - Google OAuth-Button in Einstellungen -> Integrationen testen
-     - Echtes Google- oder MEGA-Konto verknuepfen und Quota pruefen
-  2. Vercel-Deployment durchfuehren (Nutzer-Aufgabe: Repo importieren,
+  1. Dashboard-Widget fuer Cloud-Storage (Bento-Grid Widget)
+  2. Drag & Drop Datei-Upload zu Google Drive / MEGA
+  3. E-Mail Entwuerfe (Drafts) & Anhaenge im Gmail-Klon
+  4. Vercel-Deployment durchfuehren (Nutzer-Aufgabe: Repo importieren,
      Env-Variablen DATABASE_URL, VITE_CLERK_PUBLISHABLE_KEY,
      GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI setzen)
-  3. Passwort-Manager: echtes Master-Passwort setzen (Nutzer)
+  5. Passwort-Manager: echtes Master-Passwort setzen (Nutzer)
 
 0b. SESSION VOM 07.08.2026 – PHASE 3 FERTIGGESTELLT
 ---------------------------------------------------------------------

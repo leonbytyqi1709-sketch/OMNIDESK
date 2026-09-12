@@ -58,20 +58,17 @@
     * Vite Proxy (/api -> :8787) verifiziert
     * npm run build: 100% gruen, PWA Service-Worker generiert
     * npm run lint: 100% gruen (0 Fehler)
-    * Git-Commit gesichert: 8dd42c0 auf Branch main
+    * Live-Test ERFOLGREICH: 2 Google-Konten & 1 MEGA-Konto (30 GB)
+      sind in Neon DB verbunden, Quotas werden live berechnet!
 
  NAECHSTE SCHRITTE & VERBESSERUNGSIDEEN:
-  1. Live-Test durch Nutzer:
-     - Google OAuth-Button in Einstellungen -> Integrationen testen
-     - Echtes Google- oder MEGA-Konto verknuepfen und Quota-Balken pruefen
-  2. Vercel-Deployment:
+  1. Dashboard Widget fuer Cloud-Storage (Bento-Grid Widget)
+  2. Drag & Drop Datei-Upload zu Google Drive / MEGA
+  3. E-Mail Entwuerfe (Drafts) & Anhaenge im Gmail-Klon
+  4. Vercel-Deployment:
      - Auf Vercel deployen (DATABASE_URL, VITE_CLERK_PUBLISHABLE_KEY,
        GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI)
-  3. Weitere Verbesserungsideen:
-     - Dashboard Widget fuer Cloud-Storage (Bento-Grid Widget)
-     - Drag & Drop Datei-Upload zu Google Drive / MEGA
-     - E-Mail Entwuerfe (Drafts) & Anhaenge im Gmail-Klon
-     - Offline-Sync mit IndexedDB fuer Notizen & Tasks
+  5. Offline-Sync mit IndexedDB fuer Notizen & Tasks
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
