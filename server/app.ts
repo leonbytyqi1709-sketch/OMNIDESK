@@ -10,6 +10,7 @@ import { projectsRoute } from './routes/projects.ts'
 import { vaultRoute } from './routes/vault.ts'
 import { bookingRoute } from './routes/booking.ts'
 import { publicBookingRoute } from './routes/public-booking.ts'
+import { googleCallbackRoute } from './routes/google-callback.ts'
 import { integrationsRoute } from './routes/integrations.ts'
 import { mailRoute } from './routes/mail.ts'
 import { cloudMonitorRoute } from './routes/cloud-monitor.ts'
@@ -25,6 +26,7 @@ export function createApp() {
 
   // Öffentliche Routen VOR der Auth-Middleware registrieren
   app.route('/public/booking', publicBookingRoute)
+  app.route('/integrations/google', googleCallbackRoute)
 
   app.use('*', requireAuth)
   app.route('/links', linksRoute)

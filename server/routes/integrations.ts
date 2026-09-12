@@ -3,10 +3,13 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { db } from '../../src/db/client.ts'
 import { connectedAccounts } from '../../src/db/schema/index.ts'
+import { getGoogleOAuthUrl, getValidGoogleAccessToken } from '../google-auth.ts'
+import { connectMegaAccount, syncMegaAccount } from '../mega-auth.ts'
 
 const createAccountInput = z.object({
   provider: z.enum(['google', 'mega']),
   email: z.string().trim().email('Ungültige E-Mail-Adresse').max(255),
+  password: z.string().optional(), // Für Live-MEGA-Login
   label: z.string().trim().max(100).optional(),
   accessToken: z.string().trim().optional(),
   refreshToken: z.string().trim().optional(),
@@ -21,6 +24,20 @@ const updateAccountInput = z.object({
 })
 
 export const integrationsRoute = new Hono()
+
+/** Google OAuth2 Autorisierungs-URL anfordern */
+integrationsRoute.get('/google/auth-url', (c) => {
+  const returnTo = c.req.query('returnTo') || '/settings'
+  try {
+    const url = getGoogleOAuthUrl(c.get('userId'), returnTo)
+    return c.json({ url })
+  } catch (err) {
+    return c.json(
+      { error: err instanceof Error ? err.message : 'Google OAuth URL konnte nicht generiert werden.' },
+      400,
+    )
+  }
+})
 
 /** Liste aller verbundenen Konten des Nutzers (Tokens werden nicht an den Client geschickt). */
 integrationsRoute.get('/accounts', async (c) => {
@@ -58,16 +75,50 @@ integrationsRoute.post('/accounts', async (c) => {
     return c.json({ error: z.prettifyError(parsed.error) }, 400)
   }
 
-  const { provider, email, label, accessToken, refreshToken, storageUsedBytes, storageTotalBytes, metadata } =
-    parsed.data
+  const {
+    provider,
+    email,
+    password,
+    label,
+    accessToken,
+    refreshToken,
+    storageUsedBytes,
+    storageTotalBytes,
+    metadata,
+  } = parsed.data
 
-  // Standard-Werte für Kapazitäten (z. B. Google Drive 15 GB, MEGA 20 GB)
+  let finalAccessToken = accessToken ?? null
+  let finalUsed = storageUsedBytes
+  let finalTotal = storageTotalBytes
+  let finalMetadata: Record<string, unknown> = metadata ?? {}
+
+  // Wenn MEGA und Passwort übergeben wurde, Live-Login durchführen
+  if (provider === 'mega' && password) {
+    try {
+      const megaInfo = await connectMegaAccount(email, password)
+      finalAccessToken = megaInfo.sessionJson
+      finalUsed = megaInfo.spaceUsed
+      finalTotal = megaInfo.spaceTotal
+      finalMetadata = {
+        ...finalMetadata,
+        filesCount: megaInfo.filesCount,
+        lastSyncedAt: new Date().toISOString(),
+        liveConnected: true,
+      }
+    } catch (err) {
+      return c.json(
+        { error: err instanceof Error ? err.message : 'MEGA-Verbindung fehlgeschlagen.' },
+        400,
+      )
+    }
+  }
+
+  // Fallback-Werte für Kapazitäten, falls keine Live-Werte vorhanden
   const defaultTotal =
     provider === 'google'
       ? (15 * 1024 * 1024 * 1024).toString() // 15 GB
       : (20 * 1024 * 1024 * 1024).toString() // 20 GB
 
-  // Bei Demo / ohne Token erzeugen wir einen realistischen Start-Verbrauch
   const defaultUsed =
     provider === 'google'
       ? (Math.floor(Math.random() * 8 + 3) * 1024 * 1024 * 1024).toString()
@@ -80,11 +131,11 @@ integrationsRoute.post('/accounts', async (c) => {
       provider,
       email,
       label: label || (provider === 'google' ? 'Google Drive & Mail' : 'MEGA Cloud'),
-      accessToken: accessToken ?? null,
+      accessToken: finalAccessToken,
       refreshToken: refreshToken ?? null,
-      storageUsedBytes: storageUsedBytes ?? defaultUsed,
-      storageTotalBytes: storageTotalBytes ?? defaultTotal,
-      metadata: metadata ?? {},
+      storageUsedBytes: finalUsed ?? defaultUsed,
+      storageTotalBytes: finalTotal ?? defaultTotal,
+      metadata: finalMetadata,
     })
     .returning({
       id: connectedAccounts.id,
@@ -154,7 +205,7 @@ integrationsRoute.delete('/accounts/:id', async (c) => {
   return c.json({ ok: true })
 })
 
-/** Quota synchronisieren (Live-API falls Token vorhanden, sonst Status-Update). */
+/** Quota synchronisieren (Live-API falls Token/Sitzung vorhanden, sonst Timestamp). */
 integrationsRoute.post('/accounts/:id/sync', async (c) => {
   const [account] = await db
     .select()
@@ -168,11 +219,12 @@ integrationsRoute.post('/accounts/:id/sync', async (c) => {
 
   if (!account) return c.json({ error: 'Konto nicht gefunden' }, 404)
 
-  // Wenn ein Google-Access-Token vorhanden ist, fragen wir die offizielle Google Drive API an
-  if (account.provider === 'google' && account.accessToken) {
+  // 1. Google Drive Live-Synchronisation
+  if (account.provider === 'google' && (account.accessToken || account.refreshToken)) {
     try {
+      const validToken = await getValidGoogleAccessToken(account)
       const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota,user', {
-        headers: { Authorization: `Bearer ${account.accessToken}` },
+        headers: { Authorization: `Bearer ${validToken}` },
       })
       if (res.ok) {
         const data = (await res.json()) as {
@@ -193,6 +245,7 @@ integrationsRoute.post('/accounts/:id/sync', async (c) => {
                 driveUsage: data.storageQuota.usageInDrive,
                 trashUsage: data.storageQuota.usageInDriveTrash,
                 lastSyncedAt: new Date().toISOString(),
+                liveConnected: true,
               },
               updatedAt: new Date(),
             })
@@ -201,6 +254,31 @@ integrationsRoute.post('/accounts/:id/sync', async (c) => {
           return c.json(updated)
         }
       }
+    } catch {
+      // Fallback bei API/Netzwerkfehlern
+    }
+  }
+
+  // 2. MEGA Live-Synchronisation via gespeicherter Sitzung
+  if (account.provider === 'mega' && account.accessToken) {
+    try {
+      const megaSync = await syncMegaAccount(account.accessToken)
+      const [updated] = await db
+        .update(connectedAccounts)
+        .set({
+          storageUsedBytes: megaSync.spaceUsed,
+          storageTotalBytes: megaSync.spaceTotal,
+          metadata: {
+            ...((account.metadata as Record<string, unknown>) ?? {}),
+            filesCount: megaSync.filesCount,
+            lastSyncedAt: new Date().toISOString(),
+            liveConnected: true,
+          },
+          updatedAt: new Date(),
+        })
+        .where(eq(connectedAccounts.id, account.id))
+        .returning()
+      return c.json(updated)
     } catch {
       // Fallback bei Netzwerkfehlern
     }

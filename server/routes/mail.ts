@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { db } from '../../src/db/client.ts'
 import { connectedAccounts } from '../../src/db/schema/index.ts'
+import { getValidGoogleAccessToken } from '../google-auth.ts'
 
 export const mailRoute = new Hono()
 
@@ -158,13 +159,14 @@ mailRoute.get('/messages', async (c) => {
       )
 
     // Falls ein echtes Google Token existiert, versuchen wir die Gmail API anzufragen
-    if (acc?.accessToken) {
+    if (acc?.accessToken || acc?.refreshToken) {
       try {
+        const accessToken = await getValidGoogleAccessToken(acc)
         const gmailRes = await fetch(
           `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q=${encodeURIComponent(
             folder === 'starred' ? 'is:starred' : folder === 'sent' ? 'in:sent' : folder === 'trash' ? 'in:trash' : 'in:inbox',
           )}`,
-          { headers: { Authorization: `Bearer ${acc.accessToken}` } },
+          { headers: { Authorization: `Bearer ${accessToken}` } },
         )
         if (gmailRes.ok) {
           const list = (await gmailRes.json()) as { messages?: Array<{ id: string; threadId: string }> }
@@ -174,7 +176,7 @@ mailRoute.get('/messages', async (c) => {
               list.messages.slice(0, 10).map(async (m) => {
                 const itemRes = await fetch(
                   `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata`,
-                  { headers: { Authorization: `Bearer ${acc.accessToken}` } },
+                  { headers: { Authorization: `Bearer ${accessToken}` } },
                 )
                 if (itemRes.ok) {
                   const item = (await itemRes.json()) as {
@@ -259,11 +261,72 @@ mailRoute.post('/send', async (c) => {
     return c.json({ error: z.prettifyError(parsed.error) }, 400)
   }
 
-  const { toEmail, subject, body } = parsed.data
+  const { accountId, toEmail, subject, body } = parsed.data
+
+  // Falls ein echtes Google-Konto gewählt wurde, über die offizielle Gmail-API versenden
+  if (accountId && accountId !== 'demo') {
+    const [acc] = await db
+      .select()
+      .from(connectedAccounts)
+      .where(
+        and(
+          eq(connectedAccounts.id, accountId),
+          eq(connectedAccounts.userId, c.get('userId')),
+        ),
+      )
+
+    if (acc && (acc.accessToken || acc.refreshToken)) {
+      try {
+        const validToken = await getValidGoogleAccessToken(acc)
+        const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`
+        const messageParts = [
+          `From: ${acc.email}`,
+          `To: ${toEmail}`,
+          `Subject: ${utf8Subject}`,
+          'Content-Type: text/plain; charset=utf-8',
+          'MIME-Version: 1.0',
+          '',
+          body,
+        ]
+        const rawMessage = Buffer.from(messageParts.join('\r\n')).toString('base64url')
+
+        const sendRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${validToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ raw: rawMessage }),
+        })
+
+        if (sendRes.ok) {
+          const sendData = (await sendRes.json()) as { id: string }
+          const newMsg: DemoMessage = {
+            id: sendData.id,
+            accountId: acc.id,
+            fromName: acc.label || acc.email,
+            fromEmail: acc.email,
+            toEmail,
+            subject,
+            snippet: body.slice(0, 100),
+            bodyHtml: `<div style="font-family: sans-serif; white-space: pre-wrap;">${body}</div>`,
+            date: new Date().toISOString(),
+            isRead: true,
+            isStarred: false,
+            folder: 'sent',
+          }
+          demoStore.unshift(newMsg)
+          return c.json(newMsg, 201)
+        }
+      } catch {
+        // Fallback auf DemoStore bei Netzwerk- oder Berechtigungsfehlern
+      }
+    }
+  }
 
   const newMsg: DemoMessage = {
     id: `msg-${Date.now()}`,
-    accountId: 'demo',
+    accountId: accountId || 'demo',
     fromName: 'Leon Bytyqi',
     fromEmail: 'admin@omnidesk.app',
     toEmail,

@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { Cloud, HardDrive, Plus, Server, Sparkles } from 'lucide-react'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,9 +29,28 @@ function getUsagePercent(usedStr: string, totalStr: string): number {
 }
 
 export default function CloudMonitorPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { data, isLoading, error } = useCloudOverview()
   const [providerFilter, setProviderFilter] = useState<'all' | 'google' | 'mega'>('all')
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+
+  // Benachrichtigung bei OAuth Rückkehr
+  useEffect(() => {
+    const connected = searchParams.get('connected')
+    const err = searchParams.get('error')
+    const email = searchParams.get('email')
+
+    if (connected === 'google') {
+      toast.success(`Google-Konto ${email ? `(${email})` : ''} erfolgreich verknüpft!`)
+      searchParams.delete('connected')
+      if (email) searchParams.delete('email')
+      setSearchParams(searchParams, { replace: true })
+    } else if (err) {
+      toast.error(err)
+      searchParams.delete('error')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const summary = data?.summary
   const accounts = data?.accounts ?? []

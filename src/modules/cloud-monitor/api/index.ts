@@ -38,12 +38,23 @@ export interface CloudOverviewDto {
 export interface ConnectAccountInput {
   provider: 'google' | 'mega'
   email: string
+  password?: string
   label?: string
   storageUsedBytes?: string
   storageTotalBytes?: string
 }
 
 const QUERY_KEY = ['cloud-monitor'] as const
+
+export function useGoogleAuthUrl() {
+  const apiFetch = useApiFetch()
+  return useMutation({
+    mutationFn: (returnTo?: string) =>
+      apiFetch<{ url: string }>(
+        `/api/integrations/google/auth-url${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`,
+      ),
+  })
+}
 
 export function useCloudOverview() {
   const apiFetch = useApiFetch()
