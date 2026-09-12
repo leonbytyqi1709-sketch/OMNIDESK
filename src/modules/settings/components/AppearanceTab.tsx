@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { Monitor, Moon, Sun } from 'lucide-react'
+import { Monitor, Moon, SlidersHorizontal, Sun } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -17,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { DashboardCustomizerDialog } from '@/modules/dashboard/components/DashboardCustomizerDialog'
 import { useSettingsStore } from '@/stores/settings'
 
 export function AppearanceTab() {
@@ -75,6 +77,27 @@ export function AppearanceTab() {
             id="compact-switch"
             checked={compactMode}
             onCheckedChange={setCompactMode}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Dashboard-Widgets</CardTitle>
+          <CardDescription>
+            Sichtbarkeit und Anordnung der Widgets auf der Einsatzzentrale anpassen.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Widgets lassen sich direkt auf der Einsatzzentrale per Drag & Drop oder über den Widget-Manager anordnen.
+          </p>
+          <DashboardCustomizerDialog
+            trigger={
+              <Button variant="outline" size="sm" className="shrink-0 gap-2">
+                <SlidersHorizontal className="size-4" /> Widgets verwalten
+              </Button>
+            }
           />
         </CardContent>
       </Card>

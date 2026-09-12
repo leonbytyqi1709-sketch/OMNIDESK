@@ -6,6 +6,61 @@
 =====================================================================
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ UPDATE 12.09.2026 (Fortsetzung Session)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ERLEDIGT:
+  - Konfigurierbare Dashboard-Widgets KOMPLETT umgesetzt:
+    * Store: src/stores/dashboard.ts mit Zustand & localStorage-Persistenz
+      (Reihenfolge, manuelle Ausblendung, Verschieben, Reset)
+    * Registry: src/modules/dashboard/widgets.ts mit 7 Widgets
+      (Begrüßung, Pomodoro, Aufgaben, Termine, Notizen, Links + NEU: Aktive Projekte)
+    * Dynamisches Bento-Grid: src/modules/dashboard/index.tsx mit Inline-
+      Bearbeitungsmodus ("Anordnen" mit HTML5 Drag & Drop, Pfeiltasten, "Ausblenden"-Buttons)
+    * Einstellungs-Dialog: DashboardCustomizerDialog für Umschaltung der
+      Sichtbarkeiten, Reordering und Reset auf Standard
+    * Intelligente Modul-Kopplung: Wird ein Modul im Modul-Manager deaktiviert,
+      verschwindet sein Widget automatisch und wird im Dialog als inaktiv markiert
+    * Integration in Einstellungen: Card im AppearanceTab ("Erscheinungsbild")
+      zum direkten Aufruf des Widget-Managers
+    * Build & Lint: 100% grün, PWA-Service-Worker generiert
+
+ NAECHSTE SCHRITTE:
+  1. Feinschliff:
+     - Mobile-Sidebar / Responsive Design (Drawer/Sheet für Mobilgeräte)
+  2. Phase 4:
+     - Gmail-Klon (Google Mail API / OAuth2)
+     - Cloud-Monitoring (Google Drive & MEGA)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ UPDATE 11.09.2026 (Session-Abschluss / Feierabend)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ STATUS & INITIALISIERUNG:
+  - Repository geklont nach Desktop/OmniDesk/OMNIDESK
+  - Node.js LTS v24 portable in AppData/Local/Programs/nodejs eingerichtet
+  - .env.local angelegt mit VITE_CLERK_PUBLISHABLE_KEY und funktionierender
+    Neon DATABASE_URL
+  - npm run build verifiziert (Kompilierung & PWA-Generierung 100% gruen)
+  - Beide Server (Vite Port 5173 + Hono Port 8787) gestartet und E2E
+    erfolgreich im Browser getestet (Datenbankverbindung zu Neon steht,
+    alle Module laden einwandfrei)
+  - Server vor Session-Ende ordnungsgemaess gestoppt
+
+ START IN DER NAECHSTEN SESSION:
+  Im Ordner Desktop/OmniDesk/OMNIDESK:
+    Terminal 1: npm run dev        (Vite Frontend, Port 5173)
+    Terminal 2: npm run dev:api    (Hono API, Port 8787)
+
+ NAECHSTE SCHRITTE:
+  1. Feinschliff:
+     - Konfigurierbare Dashboard-Widgets (Anordnung, Sichtbarkeit)
+     - Mobile-Sidebar / Responsive Design (Mobilansicht)
+  2. Phase 4:
+     - Gmail-Klon (Google Mail API / OAuth2)
+     - Cloud-Monitoring (Google Drive & MEGA)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  UPDATE 07.08.2026 (neue Session, neues Geraet) – STATUS DER AUFGABEN
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  ERLEDIGT in dieser Session (alle Builds gruen, npm run lint sauber):

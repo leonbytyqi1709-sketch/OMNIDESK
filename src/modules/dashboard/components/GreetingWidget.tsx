@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/clerk-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 function greeting(hour: number) {
   if (hour < 5) return 'Gute Nacht'
@@ -10,7 +11,7 @@ function greeting(hour: number) {
 }
 
 /** Begrüßung mit Live-Uhr – der „Hero“ des Bento-Grids. */
-export function GreetingWidget() {
+export function GreetingWidget({ className }: { className?: string }) {
   const { user } = useUser()
   const [now, setNow] = useState(() => new Date())
 
@@ -22,7 +23,7 @@ export function GreetingWidget() {
   const name = user?.firstName ?? user?.username ?? ''
 
   return (
-    <Card className="relative justify-center overflow-hidden md:col-span-2">
+    <Card className={cn('relative justify-center overflow-hidden h-full', className)}>
       {/* Dezenter Gradient-Schimmer im Hintergrund */}
       <div
         aria-hidden
