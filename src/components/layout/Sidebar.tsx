@@ -81,7 +81,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     <TooltipProvider delayDuration={100}>
       <aside
         className={cn(
-          'sticky top-0 flex h-screen shrink-0 flex-col border-r bg-card transition-[width] duration-200',
+          'sticky top-0 hidden md:flex h-screen shrink-0 flex-col border-r bg-card transition-[width] duration-200',
           collapsed ? 'w-16' : 'w-64',
         )}
       >
