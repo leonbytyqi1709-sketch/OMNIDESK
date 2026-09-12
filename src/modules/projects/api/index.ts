@@ -14,6 +14,7 @@ export interface ProjectDto {
   description: string
   priority: TaskPriority
   status: ProjectStatus
+  tags?: string[] | null
   createdAt: string
   updatedAt: string
 }
@@ -48,6 +49,7 @@ export interface ProjectInput {
   description: string
   priority: TaskPriority
   status: ProjectStatus
+  tags?: string[]
 }
 
 const LIST_KEY = ['projects'] as const

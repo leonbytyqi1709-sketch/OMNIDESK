@@ -16,6 +16,7 @@ const projectInput = z.object({
   description: z.string().max(10_000),
   priority: z.enum(TASK_PRIORITIES),
   status: z.enum(PROJECT_STATUSES),
+  tags: z.array(z.string().trim().max(50)).optional(),
 })
 
 const projectTaskInput = z.object({

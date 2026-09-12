@@ -1,4 +1,4 @@
-import { CalendarClock, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { CalendarClock, ListChecks, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -39,6 +39,9 @@ export function TaskListView({
             <div className="divide-y rounded-lg border bg-card">
               {items.map((task) => {
                 const overdue = isOverdue(task)
+                const subtasks = task.subtasks ?? []
+                const doneSubtasks = subtasks.filter((s) => s.done).length
+
                 return (
                   <div
                     key={task.id}
@@ -64,7 +67,30 @@ export function TaskListView({
                           {task.description}
                         </p>
                       )}
+                      {task.tags && task.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {task.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded bg-secondary/80 px-1.5 py-0.5 text-[10px] text-muted-foreground font-mono"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
+                    {subtasks.length > 0 && (
+                      <span
+                        className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
+                        title={`${doneSubtasks} von ${subtasks.length} Unteraufgaben erledigt`}
+                      >
+                        <ListChecks className="size-3.5 text-primary" />
+                        <span>
+                          {doneSubtasks}/{subtasks.length}
+                        </span>
+                      </span>
+                    )}
                     {task.dueDate && (
                       <span
                         className={cn(

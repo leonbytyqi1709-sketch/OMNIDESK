@@ -20,9 +20,12 @@ export interface DashboardState {
 
 export const DEFAULT_WIDGET_ORDER: string[] = [
   'greeting',
+  'quick-stats',
+  'cloud-storage',
   'pomodoro',
   'tasks',
   'appointments',
+  'timezones',
   'notes',
   'links',
   'projects',

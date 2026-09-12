@@ -85,6 +85,18 @@ function ProjectDetailView({
         >
           {PROJECT_STATUS_META[data.project.status].label}
         </Badge>
+        {data.project.tags && data.project.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {data.project.tags.map((t) => (
+              <span
+                key={t}
+                className="rounded bg-secondary/80 px-2 py-0.5 text-xs text-muted-foreground font-mono"
+              >
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
         <span className="text-xs text-muted-foreground">
           Meilensteine: {doneMilestones}/{data.milestones.length}
         </span>
@@ -215,19 +227,33 @@ export default function ProjectsPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </CardHeader>
-                  <CardContent className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className={PRIORITY_META[project.priority].badgeClass}
-                    >
-                      {PRIORITY_META[project.priority].label}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className={PROJECT_STATUS_META[project.status].badgeClass}
-                    >
-                      {PROJECT_STATUS_META[project.status].label}
-                    </Badge>
+                  <CardContent className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className={PRIORITY_META[project.priority].badgeClass}
+                      >
+                        {PRIORITY_META[project.priority].label}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className={PROJECT_STATUS_META[project.status].badgeClass}
+                      >
+                        {PROJECT_STATUS_META[project.status].label}
+                      </Badge>
+                    </div>
+                    {project.tags && project.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {project.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded bg-secondary/80 px-1.5 py-0.5 text-[10px] text-muted-foreground font-mono"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}

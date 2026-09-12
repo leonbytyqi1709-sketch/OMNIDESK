@@ -1,4 +1,4 @@
-import { CalendarClock, ChevronLeft, ChevronRight, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { CalendarClock, ChevronLeft, ChevronRight, ListChecks, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -39,6 +39,9 @@ interface TaskCardProps {
 export function TaskCard({ task, onEdit, onDelete, onMove }: TaskCardProps) {
   const statusIndex = STATUS_ORDER.indexOf(task.status)
   const overdue = isOverdue(task)
+  const subtasks = task.subtasks ?? []
+  const doneSubtasks = subtasks.filter((s) => s.done).length
+  const totalSubtasks = subtasks.length
 
   return (
     <Card className="gap-2 p-3">
@@ -77,7 +80,41 @@ export function TaskCard({ task, onEdit, onDelete, onMove }: TaskCardProps) {
           {task.description}
         </p>
       )}
-      <div className="flex items-center justify-between gap-2">
+
+      {/* Tags */}
+      {task.tags && task.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {task.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded bg-secondary/80 px-1.5 py-0.5 text-[10px] text-muted-foreground font-mono"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Unteraufgaben-Fortschrittsbalken */}
+      {totalSubtasks > 0 && (
+        <div className="space-y-1 pt-0.5">
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1 font-medium">
+              <ListChecks className="size-3 text-primary" />
+              <span>{doneSubtasks}/{totalSubtasks} erledigt</span>
+            </span>
+            <span>{Math.round((doneSubtasks / totalSubtasks) * 100)}%</span>
+          </div>
+          <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
+            <div
+              className="h-full bg-gradient-accent transition-all duration-300"
+              style={{ width: `${(doneSubtasks / totalSubtasks) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-2">
           <Badge variant="outline" className={PRIORITY_META[task.priority].badgeClass}>
             {PRIORITY_META[task.priority].label}

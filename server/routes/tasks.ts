@@ -4,6 +4,12 @@ import { z } from 'zod'
 import { db } from '../../src/db/client.ts'
 import { TASK_PRIORITIES, TASK_STATUSES, tasks } from '../../src/db/schema/index.ts'
 
+const subtaskInput = z.object({
+  id: z.string().trim().min(1),
+  title: z.string().trim().min(1, 'Unteraufgabe darf nicht leer sein').max(300),
+  done: z.boolean(),
+})
+
 // Bewusst OHNE .default(): die Update-Route nutzt .partial(), und Defaults
 // würden dort nicht mitgeschickte Felder auf ihre Standardwerte zurücksetzen.
 const taskInput = z.object({
@@ -13,6 +19,8 @@ const taskInput = z.object({
   status: z.enum(TASK_STATUSES),
   /** ISO-Datum oder null (keine Fälligkeit) */
   dueDate: z.iso.datetime({ offset: true }).nullable(),
+  tags: z.array(z.string().trim().max(50)).optional(),
+  subtasks: z.array(subtaskInput).optional(),
 })
 
 export const tasksRoute = new Hono()

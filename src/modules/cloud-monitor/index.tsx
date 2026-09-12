@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { Cloud, HardDrive, Plus, Server, Sparkles } from 'lucide-react'
+import { AlertTriangle, Cloud, HardDrive, Plus, Server, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -72,6 +72,15 @@ export default function CloudMonitorPage() {
     ? getUsagePercent(summary.megaUsedBytes, summary.megaCapacityBytes)
     : 0
 
+  // Schwellenwert-Prüfung für Alarme
+  const criticalAccounts = accounts.filter(
+    (a) => getUsagePercent(a.storageUsedBytes, a.storageTotalBytes) >= 90,
+  )
+  const warningAccounts = accounts.filter((a) => {
+    const p = getUsagePercent(a.storageUsedBytes, a.storageTotalBytes)
+    return p >= 80 && p < 90
+  })
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header mit Titel und Hinzufügen-Aktion */}
@@ -98,6 +107,32 @@ export default function CloudMonitorPage() {
           Konto verknüpfen
         </Button>
       </div>
+
+      {/* Speicher-Schwellenwert-Alarme (Storage Alerts) */}
+      {criticalAccounts.length > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive shadow-sm">
+          <AlertTriangle className="size-5 shrink-0 animate-pulse" />
+          <div className="min-w-0 flex-1">
+            <span className="font-semibold">Kritischer Speicheralarm:</span>{' '}
+            {criticalAccounts.length === 1
+              ? `Das Konto „${criticalAccounts[0].label || criticalAccounts[0].email}“ ist zu über 90% voll.`
+              : `${criticalAccounts.length} Konten haben die 90%-Kapazitätsgrenze überschritten.`}{' '}
+            Bitte bereinige Daten, um Upload-Blockaden zu verhindern.
+          </div>
+        </div>
+      )}
+
+      {warningAccounts.length > 0 && criticalAccounts.length === 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3.5 text-sm text-amber-400 shadow-sm">
+          <AlertTriangle className="size-5 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <span className="font-semibold">Speicher-Warnung:</span>{' '}
+            {warningAccounts.length === 1
+              ? `Das Konto „${warningAccounts[0].label || warningAccounts[0].email}“ ist zu über 80% ausgelastet.`
+              : `${warningAccounts.length} Konten nähern sich der 80%-Kapazitätsgrenze.`}
+          </div>
+        </div>
+      )}
 
       {/* Aggregierte Statistik-Kacheln */}
       {isLoading ? (

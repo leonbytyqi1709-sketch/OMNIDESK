@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -29,6 +30,7 @@ export const projects = pgTable(
     description: text('description').notNull().default(''),
     priority: text('priority').$type<TaskPriority>().notNull().default('medium'),
     status: text('status').$type<ProjectStatus>().notNull().default('active'),
+    tags: jsonb('tags').$type<string[]>().default([]),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -1,5 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { Tag, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -47,6 +49,8 @@ export function ProjectFormDialog({
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('medium')
   const [status, setStatus] = useState<ProjectStatus>('active')
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -54,12 +58,33 @@ export function ProjectFormDialog({
       setDescription(editProject?.description ?? '')
       setPriority(editProject?.priority ?? 'medium')
       setStatus(editProject?.status ?? 'active')
+      setTags(editProject?.tags ? [...editProject.tags] : [])
+      setTagInput('')
     }
   }, [open, editProject])
 
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim().replace(/^#/, '')
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed])
+      setTagInput('')
+    }
+  }
+
+  const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      handleAddTag()
+    }
+  }
+
+  const handleRemoveTag = (t: string) => {
+    setTags(tags.filter((item) => item !== t))
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    const input = { name, description, priority, status }
+    const input = { name, description, priority, status, tags }
     try {
       if (editProject) {
         await updateProject.mutateAsync(input)
@@ -150,6 +175,52 @@ export function ProjectFormDialog({
               </Select>
             </div>
           </div>
+
+          {/* Tags / Schlagwörter */}
+          <div className="flex flex-col gap-2 border-t border-border/40 pt-3">
+            <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Tag className="size-3.5" /> Tags & Schlagwörter
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Tag eingeben (z. B. Netzwerk, Kunde-A)..."
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                className="h-9 text-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddTag}
+                className="h-9 text-xs"
+              >
+                Hinzufügen
+              </Button>
+            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {tags.map((t) => (
+                  <Badge
+                    key={t}
+                    variant="secondary"
+                    className="gap-1 text-xs py-0.5 px-2"
+                  >
+                    #{t}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(t)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
           <DialogFooter>
             <Button
               type="button"

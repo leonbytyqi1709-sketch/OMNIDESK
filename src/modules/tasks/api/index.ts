@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useApiFetch } from '@/hooks/use-api'
-import type { TaskPriority, TaskStatus } from '@/db/schema'
+import type { Subtask, TaskPriority, TaskStatus } from '@/db/schema'
 
-export type { TaskPriority, TaskStatus }
+export type { Subtask, TaskPriority, TaskStatus }
 
 /** Aufgabe, wie sie die API liefert (Timestamps als ISO-Strings). */
 export interface TaskDto {
@@ -12,6 +12,8 @@ export interface TaskDto {
   priority: TaskPriority
   status: TaskStatus
   dueDate: string | null
+  tags?: string[] | null
+  subtasks?: Subtask[] | null
   createdAt: string
   updatedAt: string
 }
@@ -22,6 +24,8 @@ export interface TaskInput {
   priority: TaskPriority
   status: TaskStatus
   dueDate: string | null
+  tags?: string[]
+  subtasks?: Subtask[]
 }
 
 const QUERY_KEY = ['tasks'] as const

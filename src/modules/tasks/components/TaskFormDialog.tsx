@@ -1,6 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { ListChecks, Plus, Tag, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -22,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   useCreateTask,
   useUpdateTask,
+  type Subtask,
   type TaskDto,
   type TaskPriority,
   type TaskStatus,
@@ -55,6 +59,10 @@ export function TaskFormDialog({
   const [priority, setPriority] = useState<TaskPriority>('medium')
   const [status, setStatus] = useState<TaskStatus>('todo')
   const [dueDate, setDueDate] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
+  const [subtasks, setSubtasks] = useState<Subtask[]>([])
+  const [subtaskInput, setSubtaskInput] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -63,8 +71,53 @@ export function TaskFormDialog({
       setPriority(editTask?.priority ?? 'medium')
       setStatus(editTask?.status ?? 'todo')
       setDueDate(toDateInputValue(editTask?.dueDate ?? null))
+      setTags(editTask?.tags ? [...editTask.tags] : [])
+      setTagInput('')
+      setSubtasks(editTask?.subtasks ? [...editTask.subtasks] : [])
+      setSubtaskInput('')
     }
   }, [open, editTask])
+
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim().replace(/^#/, '')
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed])
+      setTagInput('')
+    }
+  }
+
+  const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      handleAddTag()
+    }
+  }
+
+  const handleRemoveTag = (t: string) => {
+    setTags(tags.filter((item) => item !== t))
+  }
+
+  const handleAddSubtask = () => {
+    const trimmed = subtaskInput.trim()
+    if (!trimmed) return
+    const newSubtask: Subtask = {
+      id: crypto.randomUUID(),
+      title: trimmed,
+      done: false,
+    }
+    setSubtasks([...subtasks, newSubtask])
+    setSubtaskInput('')
+  }
+
+  const handleToggleSubtask = (id: string) => {
+    setSubtasks(
+      subtasks.map((st) => (st.id === id ? { ...st, done: !st.done } : st)),
+    )
+  }
+
+  const handleRemoveSubtask = (id: string) => {
+    setSubtasks(subtasks.filter((st) => st.id !== id))
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -75,6 +128,8 @@ export function TaskFormDialog({
       status,
       // Fällig am Ende des gewählten Tages (lokale Zeit)
       dueDate: dueDate ? new Date(`${dueDate}T23:59:59`).toISOString() : null,
+      tags,
+      subtasks,
     }
     try {
       if (editTask) {
@@ -92,13 +147,13 @@ export function TaskFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {editTask ? 'Aufgabe bearbeiten' : 'Neue Aufgabe'}
           </DialogTitle>
           <DialogDescription>
-            Mit Priorität, Status und optionaler Fälligkeit.
+            Mit Priorität, Status, Fälligkeit, Tags und Unteraufgaben.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -174,7 +229,120 @@ export function TaskFormDialog({
               onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
-          <DialogFooter>
+
+          {/* Tags / Schlagwörter */}
+          <div className="flex flex-col gap-2 border-t border-border/40 pt-3">
+            <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Tag className="size-3.5" /> Tags & Schlagwörter
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Tag eingeben (z. B. Netzwerk, Dringend)..."
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                className="h-9 text-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddTag}
+                className="h-9 text-xs"
+              >
+                Hinzufügen
+              </Button>
+            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {tags.map((t) => (
+                  <Badge
+                    key={t}
+                    variant="secondary"
+                    className="gap-1 text-xs py-0.5 px-2"
+                  >
+                    #{t}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(t)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Unteraufgaben / Checkliste */}
+          <div className="flex flex-col gap-2 border-t border-border/40 pt-3">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <ListChecks className="size-3.5" /> Unteraufgaben ({subtasks.filter((s) => s.done).length}/{subtasks.length})
+              </Label>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Neue Unteraufgabe eingeben..."
+                value={subtaskInput}
+                onChange={(e) => setSubtaskInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddSubtask()
+                  }
+                }}
+                className="h-9 text-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddSubtask}
+                className="h-9 text-xs gap-1"
+              >
+                <Plus className="size-3.5" /> Hinzufügen
+              </Button>
+            </div>
+            {subtasks.length > 0 && (
+              <div className="space-y-1.5 rounded-lg border border-border/40 bg-secondary/10 p-2 pt-2.5">
+                {subtasks.map((st) => (
+                  <div
+                    key={st.id}
+                    className="flex items-center justify-between gap-2 rounded-md bg-card/60 p-2 text-xs transition-colors hover:bg-card"
+                  >
+                    <label className="flex flex-1 items-center gap-2 cursor-pointer select-none">
+                      <Checkbox
+                        checked={st.done}
+                        onCheckedChange={() => handleToggleSubtask(st.id)}
+                      />
+                      <span
+                        className={
+                          st.done
+                            ? 'text-muted-foreground line-through'
+                            : 'text-foreground font-medium'
+                        }
+                      >
+                        {st.title}
+                      </span>
+                    </label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-6 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleRemoveSubtask(st.id)}
+                    >
+                      <Trash2 className="size-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="pt-2">
             <Button
               type="button"
               variant="outline"

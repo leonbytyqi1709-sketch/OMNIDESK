@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Cloud, HardDrive, RefreshCw, Trash2 } from 'lucide-react'
+import { AlertTriangle, Cloud, HardDrive, RefreshCw, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -36,9 +36,9 @@ export function AccountCard({ account }: AccountCardProps) {
   const percent = getUsagePercent(account.storageUsedBytes, account.storageTotalBytes)
   const isGoogle = account.provider === 'google'
 
-  // Farblogik nach Auslastung
+  // Farblogik nach Auslastung (Schwellenwert-Alarme)
   const isCritical = percent >= 90
-  const isWarning = percent >= 75 && percent < 90
+  const isWarning = percent >= 80 && percent < 90
 
   const handleSync = () => {
     syncMutation.mutate(account.id)
@@ -119,6 +119,19 @@ export function AccountCard({ account }: AccountCardProps) {
               style={{ width: `${Math.max(3, percent)}%` }}
             />
           </div>
+
+          {/* Schwellenwert-Warnhinweis */}
+          {isCritical ? (
+            <div className="flex items-center gap-1.5 rounded border border-destructive/30 bg-destructive/10 p-2 text-[11px] text-destructive font-medium">
+              <AlertTriangle className="size-3.5 shrink-0" />
+              <span>Kritischer Speicher: Über 90% belegt! Bitte Daten bereinigen.</span>
+            </div>
+          ) : isWarning ? (
+            <div className="flex items-center gap-1.5 rounded border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-400 font-medium">
+              <AlertTriangle className="size-3.5 shrink-0" />
+              <span>Speicherwarnung: Über 80% belegt.</span>
+            </div>
+          ) : null}
         </div>
       </CardHeader>
 

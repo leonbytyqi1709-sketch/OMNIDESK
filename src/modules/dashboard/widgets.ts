@@ -1,21 +1,27 @@
 import type { ComponentType } from 'react'
 import {
   CalendarDays,
+  Cloud,
+  Globe,
   Link2,
   ListTodo,
   NotebookPen,
   Sparkles,
   SquareKanban,
   Timer,
+  Zap,
   type LucideIcon,
 } from 'lucide-react'
 import { AppointmentsWidget } from './components/AppointmentsWidget'
+import { CloudStorageWidget } from './components/CloudStorageWidget'
 import { GreetingWidget } from './components/GreetingWidget'
 import { LinksWidget } from './components/LinksWidget'
 import { NotesWidget } from './components/NotesWidget'
 import { PomodoroWidget } from './components/PomodoroWidget'
 import { ProjectsWidget } from './components/ProjectsWidget'
+import { QuickStatsWidget } from './components/QuickStatsWidget'
 import { TasksWidget } from './components/TasksWidget'
+import { TimezonesWidget } from './components/TimezonesWidget'
 
 export interface DashboardWidgetMeta {
   id: string
@@ -37,6 +43,21 @@ export const DASHBOARD_WIDGETS: DashboardWidgetMeta[] = [
     icon: Sparkles,
     component: GreetingWidget,
     colSpanClass: 'md:col-span-2',
+  },
+  {
+    id: 'quick-stats',
+    title: 'Tages-Fokus & Status',
+    description: 'Zentrale Übersicht über offene Aufgaben, nächste Termine und Fokus-Timer',
+    icon: Zap,
+    component: QuickStatsWidget,
+  },
+  {
+    id: 'cloud-storage',
+    title: 'Cloud-Speicher',
+    description: 'Aggregierte Speicherauslastung für Google Drive und MEGA mit Schwellenwert-Alarm',
+    icon: Cloud,
+    component: CloudStorageWidget,
+    moduleId: 'cloud-monitor',
   },
   {
     id: 'pomodoro',
@@ -61,6 +82,13 @@ export const DASHBOARD_WIDGETS: DashboardWidgetMeta[] = [
     icon: CalendarDays,
     component: AppointmentsWidget,
     moduleId: 'calendar',
+  },
+  {
+    id: 'timezones',
+    title: 'IT-Weltuhr & Zeitzonen',
+    description: 'Live-Uhrzeiten für Berlin, Server (UTC), New York und Tokio',
+    icon: Globe,
+    component: TimezonesWidget,
   },
   {
     id: 'notes',
