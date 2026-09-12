@@ -1,11 +1,247 @@
+import { useState } from 'react'
+import { Cloud, HardDrive, Plus, Server, Sparkles } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useCloudOverview } from './api'
+import { AccountCard } from './components/AccountCard'
+import { AddAccountDialog } from './components/AddAccountDialog'
+
+function formatBytes(bytesStr: string): string {
+  const bytes = parseFloat(bytesStr || '0')
+  if (isNaN(bytes) || bytes === 0) return '0 GB'
+  const gb = bytes / (1024 * 1024 * 1024)
+  if (gb >= 1000) {
+    return `${(gb / 1024).toFixed(1)} TB`
+  }
+  return `${gb.toFixed(1)} GB`
+}
+
+function getUsagePercent(usedStr: string, totalStr: string): number {
+  const used = parseFloat(usedStr || '0')
+  const total = parseFloat(totalStr || '1')
+  if (isNaN(used) || isNaN(total) || total <= 0) return 0
+  return Math.min(100, Math.round((used / total) * 1000) / 10)
+}
+
 export default function CloudMonitorPage() {
+  const { data, isLoading, error } = useCloudOverview()
+  const [providerFilter, setProviderFilter] = useState<'all' | 'google' | 'mega'>('all')
+  const [addDialogOpen, setAddDialogOpen] = useState(false)
+
+  const summary = data?.summary
+  const accounts = data?.accounts ?? []
+
+  const filteredAccounts = accounts.filter((acc) => {
+    if (providerFilter === 'all') return true
+    return acc.provider === providerFilter
+  })
+
+  const totalPercent = summary
+    ? getUsagePercent(summary.totalUsedBytes, summary.totalCapacityBytes)
+    : 0
+
+  const googlePercent = summary
+    ? getUsagePercent(summary.googleUsedBytes, summary.googleCapacityBytes)
+    : 0
+
+  const megaPercent = summary
+    ? getUsagePercent(summary.megaUsedBytes, summary.megaCapacityBytes)
+    : 0
+
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Cloud-Monitoring</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Live-Überwachung von Cloud-Speicher (Google Drive, MEGA).</p>
-      <div className="mt-8 flex h-64 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-        Modul in Entwicklung
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Header mit Titel und Hinzufügen-Aktion */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Cloud-Monitoring
+            </h1>
+            <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+              Multi-Cloud
+            </Badge>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Live-Überwachung von Speicherkapazitäten über Google Drive und MEGA.
+          </p>
+        </div>
+
+        <Button
+          onClick={() => setAddDialogOpen(true)}
+          className="bg-gradient-accent glow text-white gap-2 shadow-md shrink-0 self-start sm:self-auto"
+        >
+          <Plus className="size-4" />
+          Konto verknüpfen
+        </Button>
       </div>
+
+      {/* Aggregierte Statistik-Kacheln */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+        </div>
+      ) : summary ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Gesamtspeicher */}
+          <Card className="border-border bg-card">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Gesamter Speicherplatz
+              </CardTitle>
+              <Server className="size-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold text-foreground">
+                {formatBytes(summary.totalUsedBytes)}{' '}
+                <span className="text-xs font-normal text-muted-foreground">
+                  / {formatBytes(summary.totalCapacityBytes)}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>{summary.accountsCount} Konten verbunden</span>
+                <span className="font-semibold text-foreground">{totalPercent}%</span>
+              </div>
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full bg-gradient-accent transition-all duration-300"
+                  style={{ width: `${Math.max(2, totalPercent)}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Google Drive Konten */}
+          <Card className="border-border bg-card">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Google Drive
+              </CardTitle>
+              <HardDrive className="size-4 text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold text-foreground">
+                {formatBytes(summary.googleUsedBytes)}{' '}
+                <span className="text-xs font-normal text-muted-foreground">
+                  / {formatBytes(summary.googleCapacityBytes)}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>{summary.googleCount} Accounts konfiguriert</span>
+                <span className="font-semibold text-foreground">{googlePercent}%</span>
+              </div>
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-300"
+                  style={{ width: `${Math.max(2, googlePercent)}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* MEGA Cloud Konten */}
+          <Card className="border-border bg-card">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                MEGA Cloud
+              </CardTitle>
+              <Cloud className="size-4 text-red-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold text-foreground">
+                {formatBytes(summary.megaUsedBytes)}{' '}
+                <span className="text-xs font-normal text-muted-foreground">
+                  / {formatBytes(summary.megaCapacityBytes)}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>{summary.megaCount} Accounts konfiguriert</span>
+                <span className="font-semibold text-foreground">{megaPercent}%</span>
+              </div>
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full bg-red-500 transition-all duration-300"
+                  style={{ width: `${Math.max(2, megaPercent)}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
+      {/* Filter Tabs & Konten-Übersicht */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Tabs
+            value={providerFilter}
+            onValueChange={(val) => setProviderFilter(val as 'all' | 'google' | 'mega')}
+            className="w-full sm:w-auto"
+          >
+            <TabsList className="grid w-full grid-cols-3 sm:w-auto">
+              <TabsTrigger value="all">
+                Alle ({accounts.length})
+              </TabsTrigger>
+              <TabsTrigger value="google">
+                Google Drive ({accounts.filter((a) => a.provider === 'google').length})
+              </TabsTrigger>
+              <TabsTrigger value="mega">
+                MEGA ({accounts.filter((a) => a.provider === 'mega').length})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <span className="text-xs text-muted-foreground">
+            {filteredAccounts.length} Konten aktiv
+          </span>
+        </div>
+
+        {/* Ladeanzeige oder Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Skeleton className="h-52 rounded-xl" />
+            <Skeleton className="h-52 rounded-xl" />
+            <Skeleton className="h-52 rounded-xl" />
+          </div>
+        ) : error ? (
+          <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6 text-center text-sm text-destructive">
+            Fehler beim Laden der Cloud-Daten: {error.message}
+          </div>
+        ) : filteredAccounts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
+            <Sparkles className="size-10 text-muted-foreground/50 mb-3" />
+            <h3 className="text-base font-semibold text-foreground">
+              Keine Konten in dieser Ansicht
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+              Verknüpfe neue Konten für Google Drive oder MEGA, um deinen Cloud-Speicherplatz hier in Echtzeit zu überwachen.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4 gap-2"
+              onClick={() => setAddDialogOpen(true)}
+            >
+              <Plus className="size-4" />
+              Jetzt Konto anlegen
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredAccounts.map((account) => (
+              <AccountCard key={account.id} account={account} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <AddAccountDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+      />
     </div>
   )
 }

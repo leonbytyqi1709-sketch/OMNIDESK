@@ -24,12 +24,45 @@
       zum direkten Aufruf des Widget-Managers
     * Build & Lint: 100% grün, PWA-Service-Worker generiert
 
+   - Mobile-Sidebar / Responsive Design KOMPLETT umgesetzt:
+     * MobileHeader: src/components/layout/MobileHeader.tsx mit Sticky Topbar,
+       Branding, User-Avatar und Hamburger-Icon (< md)
+     * Drawer-Navigation: Sheet-Komponente mit voller Modul-Navigation,
+       Kategorie-Gruppierung, Active-Styling, Profile & Settings-Footer
+     * Desktop-Sidebar: hidden md:flex in src/components/layout/Sidebar.tsx
+     * AppLayout: flex-col md:flex-row mit sauberer Umschaltung
+     * Accessibility: SheetDescription sr-only für screen reader
+     * Build & Lint: 100% grün, PWA-Service-Worker generiert
+
+   - Phase 4: API-Königsdisziplin KOMPLETT umgesetzt:
+     * Drizzle-Schema: src/db/schema/integrations.ts mit connected_accounts Tabelle
+       (Multi-Account Support, Google OAuth Tokens, Quota Metriken in Bytes)
+       per `npm run db:push` in Neon migriert
+     * API-Routen in server/routes/ & server/app.ts:
+       - /api/integrations: Konten verknüpfen, bearbeiten, trennen, synchronisieren
+       - /api/mail: Multi-Account Gmail API mit echtem Google-API-Aufruf & Demo-Store
+         (Posteingang, Gesendet, Markiert, Papierkorb, E-Mail-Versand, Labels)
+       - /api/cloud-monitor: Aggregierte Speicherdaten über alle Konten & Provider
+     * Cloud-Monitoring Modul (src/modules/cloud-monitor/):
+       - Bento-Grid mit Gesamtspeicher-Fortschritt & Provider-Aufteilung
+       - Provider-Filter (Alle, Google Drive, MEGA), bis zu 11 Accounts
+       - AccountCard mit detaillierter Aufschlüsselung (Drive, Trash, Dateien)
+       - AddAccountDialog zum Anlegen/Verknüpfen neuer Konten
+     * Gmail-Klon Modul (src/modules/mail/):
+       - 3-Spalten Desktop / Responsive 2-Spalten Mobile Layout
+       - MailSidebar (Account-Wechsler, Ordner mit Unread-Badges, Compose-Button)
+       - MailList (Echtzeit-Suche, Ungelesen-Filter, Glow-Indikator, Favoriten-Stern)
+       - MailDetail (Formatierter E-Mail-Body, Absender, Antworten-Aktion, Löschen)
+       - MailComposeDialog (Empfänger, Betreff, Body, Senden mit Sonner Toast)
+     * Einstellungen Integrationen-Tab:
+       - Aktive Kontenliste für Google & MEGA mit Speicherauslastung & Trennen
+       - Dialog zum Hinzufügen weiterer Konten
+     * Build & Lint: 100% grün, 0 Fehler, PWA-Service-Worker generiert
+
  NAECHSTE SCHRITTE:
-  1. Feinschliff:
-     - Mobile-Sidebar / Responsive Design (Drawer/Sheet für Mobilgeräte)
-  2. Phase 4:
-     - Gmail-Klon (Google Mail API / OAuth2)
-     - Cloud-Monitoring (Google Drive & MEGA)
+  1. Vercel-Deployment durch den Projektinhaber (DATABASE_URL & Clerk Key hinterlegen)
+  2. Optional: Echte Google OAuth Client-Credentials in .env.local eintragen (VITE_GOOGLE_CLIENT_ID)
+  3. Passwort-Manager: Echtes Master-Passwort durch Nutzer im Produktivbetrieb setzen
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

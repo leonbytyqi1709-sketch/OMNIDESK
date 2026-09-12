@@ -10,6 +10,9 @@ import { projectsRoute } from './routes/projects.ts'
 import { vaultRoute } from './routes/vault.ts'
 import { bookingRoute } from './routes/booking.ts'
 import { publicBookingRoute } from './routes/public-booking.ts'
+import { integrationsRoute } from './routes/integrations.ts'
+import { mailRoute } from './routes/mail.ts'
+import { cloudMonitorRoute } from './routes/cloud-monitor.ts'
 
 /**
  * Gemeinsame App-Factory für beide Laufzeiten:
@@ -33,6 +36,9 @@ export function createApp() {
   app.route('/projects', projectsRoute)
   app.route('/vault', vaultRoute)
   app.route('/booking', bookingRoute)
+  app.route('/integrations', integrationsRoute)
+  app.route('/mail', mailRoute)
+  app.route('/cloud-monitor', cloudMonitorRoute)
 
   return app
 }
