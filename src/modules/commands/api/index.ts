@@ -7,8 +7,8 @@ export interface CommandDto {
   title: string
   command: string
   category: string
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface CommandInput {

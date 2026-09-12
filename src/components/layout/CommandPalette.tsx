@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTheme } from 'next-themes'
 import {
@@ -21,7 +21,6 @@ import {
   Settings,
   SkipForward,
   Sun,
-  Terminal,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -35,10 +34,28 @@ import {
   CommandShortcut,
 } from '@/components/ui/command'
 import { moduleRegistry } from '@/config/modules'
+import { useCommands, type CommandDto } from '@/modules/commands/api'
+import {
+  CommandParamDialog,
+  extractPlaceholders,
+} from '@/modules/commands/components/CommandParamDialog'
 import { STARTER_COMMANDS } from '@/modules/commands/starter-library'
 import { useCommandPaletteStore } from '@/stores/command-palette'
 import { usePomodoroStore } from '@/stores/pomodoro'
 import { useSettingsStore } from '@/stores/settings'
+
+function getCategoryIcon(cat: string) {
+  if (cat.includes('Kubernetes') || cat.includes('Cloud-Native')) return '☸️'
+  if (cat.includes('Sicherheit') || cat.includes('SSL') || cat.includes('Auditing')) return '🛡️'
+  if (cat.includes('Datenbanken') || cat.includes('Caches')) return '🐘'
+  if (cat.includes('Active Directory') || cat.includes('Windows Server')) return '🏢'
+  if (cat.includes('Linux') || cat.includes('Ubuntu')) return '🐧'
+  if (cat.includes('Windows') || cat.includes('PowerShell')) return '🪟'
+  if (cat.includes('Git')) return '🌿'
+  if (cat.includes('Docker') || cat.includes('Container')) return '🐳'
+  if (cat.includes('Netzwerk') || cat.includes('Cisco') || cat.includes('Troubleshooting')) return '🌐'
+  return '⚡'
+}
 
 export function CommandPalette() {
   const isOpen = useCommandPaletteStore((s) => s.isOpen)
@@ -49,6 +66,37 @@ export function CommandPalette() {
   const { setTheme } = useTheme()
   const { compactMode, setCompactMode, disabledModules } = useSettingsStore()
   const { start: startPomodoro, pause: pausePomodoro, reset: resetPomodoro, skip: skipPomodoro, running: pomodoroRunning } = usePomodoroStore()
+
+  const { data: userCommands } = useCommands()
+  const [paramCmd, setParamCmd] = useState<CommandDto | null>(null)
+  const [paramOpen, setParamOpen] = useState(false)
+
+  // Alle Befehle (Nutzer + Starter) zusammenführen
+  const allCommands = useMemo<CommandDto[]>(() => {
+    const list: CommandDto[] = []
+    const seen = new Set<string>()
+
+    for (const cmd of userCommands ?? []) {
+      if (!seen.has(cmd.command)) {
+        seen.add(cmd.command)
+        list.push(cmd)
+      }
+    }
+
+    for (const cmd of STARTER_COMMANDS) {
+      if (!seen.has(cmd.command)) {
+        seen.add(cmd.command)
+        list.push({
+          id: `starter-${cmd.command}`,
+          title: cmd.title,
+          command: cmd.command,
+          category: cmd.category,
+        })
+      }
+    }
+
+    return list
+  }, [userCommands])
 
   // Globaler Tastatur-Listener für Strg + K / Cmd + K
   useEffect(() => {
@@ -79,8 +127,9 @@ export function CommandPalette() {
   const activeModules = moduleRegistry.filter((m) => !disabledModules.includes(m.id))
 
   return (
-    <CommandDialog open={isOpen} onOpenChange={setOpen}>
-      <CommandInput placeholder="Befehl tippen oder Aktion suchen (z. B. 'Notiz', 'Port', 'Dark', 'Pomodoro')..." />
+    <>
+      <CommandDialog open={isOpen} onOpenChange={setOpen}>
+        <CommandInput placeholder="Befehl tippen oder Aktion suchen (z. B. 'Notiz', 'Port', 'Dark', 'Pomodoro')..." />
       <CommandList>
         <CommandEmpty>Keine passenden Befehle gefunden.</CommandEmpty>
 
@@ -295,26 +344,44 @@ export function CommandPalette() {
 
         <CommandSeparator />
 
-        {/* 4. Terminal- & IT-Befehle (Direktkopie) */}
-        <CommandGroup heading="CLI-Befehle & Terminal (Sofortkopie)">
-          {STARTER_COMMANDS.map((cmd) => (
-            <CommandItem
-              key={cmd.command}
-              value={`CLI ${cmd.category}: ${cmd.title} ${cmd.command}`}
-              onSelect={() =>
-                runCommand(() => copyToClipboard(cmd.command, cmd.title))
-              }
-            >
-              <Terminal className="size-4 text-primary" />
-              <div className="flex flex-col min-w-0">
-                <span className="truncate">{cmd.title}</span>
-                <code className="text-[11px] text-muted-foreground font-mono truncate">
-                  {cmd.command}
-                </code>
-              </div>
-              <CommandShortcut>{cmd.category}</CommandShortcut>
-            </CommandItem>
-          ))}
+        {/* 4. Terminal- & IT-Befehle (Direktkopie & Parameter-Dialog) */}
+        <CommandGroup heading={`CLI-Befehle & Cheat-Sheet (${allCommands.length} Befehle)`}>
+          {allCommands.map((cmd) => {
+            const hasPlaceholders = extractPlaceholders(cmd.command).length > 0
+            const icon = getCategoryIcon(cmd.category)
+
+            return (
+              <CommandItem
+                key={cmd.id}
+                value={`CLI ${cmd.category}: ${cmd.title} ${cmd.command}`}
+                onSelect={() => {
+                  if (hasPlaceholders) {
+                    setOpen(false)
+                    setParamCmd(cmd)
+                    setParamOpen(true)
+                  } else {
+                    runCommand(() => copyToClipboard(cmd.command, cmd.title))
+                  }
+                }}
+              >
+                <span className="text-base select-none shrink-0">{icon}</span>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate">{cmd.title}</span>
+                    {hasPlaceholders && (
+                      <span className="text-[10px] text-primary bg-primary/10 border border-primary/30 rounded px-1 py-0 select-none shrink-0 font-sans">
+                        Parameter
+                      </span>
+                    )}
+                  </div>
+                  <code className="text-[11px] text-muted-foreground font-mono truncate">
+                    {cmd.command}
+                  </code>
+                </div>
+                <CommandShortcut>{cmd.category}</CommandShortcut>
+              </CommandItem>
+            )
+          })}
         </CommandGroup>
 
         <CommandSeparator />
@@ -398,6 +465,12 @@ export function CommandPalette() {
         </div>
         <span className="font-semibold text-gradient-accent">OmniDesk</span>
       </div>
-    </CommandDialog>
+      </CommandDialog>
+      <CommandParamDialog
+        command={paramCmd}
+        open={paramOpen}
+        onOpenChange={setParamOpen}
+      />
+    </>
   )
 }

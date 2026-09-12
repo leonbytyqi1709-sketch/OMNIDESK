@@ -1,13 +1,13 @@
 import type { CommandInput } from './api'
 
 /**
- * Umfangreiche IT- & DevOps-Befehlsbibliothek (über 80 kuratierte Befehle).
- * Speziell abgestimmt auf Windows (CMD & PowerShell), Git-Workflows,
- * Ubuntu / Linux Server-Administration, Netzwerk / Cisco und Docker.
+ * Umfangreiche IT-, DevOps-, SysAdmin- & Security-Befehlsbibliothek (über 160 kuratierte Befehle).
+ * Speziell abgestimmt auf Linux/Ubuntu, Windows & PowerShell, Active Directory,
+ * Git-Workflows, Docker & Compose, Kubernetes, Datenbanken, IT-Security/SSL und Netzwerk.
  */
 export const STARTER_COMMANDS: CommandInput[] = [
   // =========================================================================
-  // 🐧 LINUX & UBUNTU SERVER (Server-Betrieb, Systemd, Logs, Rechte, Netzwerk)
+  // 🐧 LINUX & UBUNTU SERVER (Systemd, Logs, Performance, Rechte, Files)
   // =========================================================================
   {
     category: 'Linux & Ubuntu Server',
@@ -121,13 +121,8 @@ export const STARTER_COMMANDS: CommandInput[] = [
   },
   {
     category: 'Linux & Ubuntu Server',
-    title: 'Schneller, robuster Dateiabgleich über SSH (Rsync mit Fortschritt)',
+    title: 'Schneller Dateiabgleich über SSH (Rsync mit Fortschritt & Kompression)',
     command: 'rsync -avzP -e ssh {{LOKALER_PFAD}} {{USER}}@{{HOST}}:{{REMOTE_PFAD}}',
-  },
-  {
-    category: 'Linux & Ubuntu Server',
-    title: 'Neues modernes SSH-Schlüsselpaar generieren (Ed25519)',
-    command: 'ssh-keygen -t ed25519 -C "{{EMAIL}}"',
   },
   {
     category: 'Linux & Ubuntu Server',
@@ -144,9 +139,29 @@ export const STARTER_COMMANDS: CommandInput[] = [
     title: 'Cronjobs des aktuellen Benutzers bearbeiten',
     command: 'crontab -e',
   },
+  {
+    category: 'Linux & Ubuntu Server',
+    title: 'Prozesse nach CPU-Auslastung absteigend filtern (Top 10)',
+    command: 'ps aux --sort=-%cpu | head -11',
+  },
+  {
+    category: 'Linux & Ubuntu Server',
+    title: 'Prozesse nach RAM-Auslastung absteigend filtern (Top 10)',
+    command: 'ps aux --sort=-%mem | head -11',
+  },
+  {
+    category: 'Linux & Ubuntu Server',
+    title: 'Prozess anhand des Namens sauber beenden (pkill)',
+    command: 'sudo pkill -f {{PROZESS_NAME}}',
+  },
+  {
+    category: 'Linux & Ubuntu Server',
+    title: 'Systemzeit mit NTP-Server synchronisieren',
+    command: 'sudo timedatectl set-ntp true && timedatectl status',
+  },
 
   // =========================================================================
-  // 🪟 WINDOWS (CMD & POWERSHELL)
+  // 🪟 WINDOWS TERMINAL & POWERSHELL
   // =========================================================================
   {
     category: 'Windows Terminal & PowerShell',
@@ -160,7 +175,7 @@ export const STARTER_COMMANDS: CommandInput[] = [
   },
   {
     category: 'Windows Terminal & PowerShell',
-    title: 'Aktive TCP-Verbindungen mit zugehöriger PID und Prozessname',
+    title: 'Aktive TCP-Verbindungen mit zugehöriger PID und Status',
     command: 'netstat -ano | findstr LISTENING',
   },
   {
@@ -195,7 +210,7 @@ export const STARTER_COMMANDS: CommandInput[] = [
   },
   {
     category: 'Windows Terminal & PowerShell',
-    title: 'Netzwerk-Port auf Zielhost testen (Ping/Portcheck)',
+    title: 'Netzwerk-Port auf Zielhost testen (Ping/Portcheck PowerShell)',
     command: 'Test-NetConnection -ComputerName {{HOST_ODER_IP}} -Port {{PORT}}',
   },
   {
@@ -220,18 +235,97 @@ export const STARTER_COMMANDS: CommandInput[] = [
   },
   {
     category: 'Windows Terminal & PowerShell',
-    title: 'Robocopy: Verzeichnisse spiegeln mit Wiederaufnahme & Berechtigung',
+    title: 'Robocopy: Verzeichnisse spiegeln mit Wiederaufnahme & Multithreading',
     command: 'robocopy "{{QUELLE}}" "{{ZIEL}}" /MIR /R:2 /W:5 /MT:16 /LOG:"C:\\robocopy.log"',
   },
   {
     category: 'Windows Terminal & PowerShell',
-    title: 'Lokale Benutzerkonten anzeigen',
-    command: 'net user',
+    title: 'Winget: Alle installierten Programme auflisten und aktualisieren',
+    command: 'winget upgrade --all --include-unknown',
+  },
+  {
+    category: 'Windows Terminal & PowerShell',
+    title: 'BitLocker-Verschlüsselungsstatus aller Laufwerke prüfen',
+    command: 'manage-bde -status',
+  },
+  {
+    category: 'Windows Terminal & PowerShell',
+    title: 'Hardware-Informationen zu CPU, RAM und Mainboard abrufen',
+    command: 'Get-CimInstance Win32_ComputerSystem; Get-CimInstance Win32_Processor | Select-Object Name, NumberOfCores, NumberOfLogicalProcessors',
+  },
+  {
+    category: 'Windows Terminal & PowerShell',
+    title: 'Firewall-Regel zum Öffnen eines eingehenden Ports hinzufügen',
+    command: 'New-NetFirewallRule -DisplayName "{{REGEL_NAME}}" -Direction Inbound -LocalPort {{PORT}} -Protocol TCP -Action Allow',
   },
   {
     category: 'Windows Terminal & PowerShell',
     title: 'Öffentliche IP-Adresse über PowerShell abrufen',
     command: '(Invoke-WebRequest ifconfig.me/ip).Content.Trim()',
+  },
+
+  // =========================================================================
+  // 🏢 ACTIVE DIRECTORY & WINDOWS SERVER
+  // =========================================================================
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'Gruppenrichtlinien sofort erzwingen und aktualisieren',
+    command: 'gpupdate /force',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'Angewendete Gruppenrichtlinien des angemeldeten Benutzers analysieren',
+    command: 'gpresult /r',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'Eigene Kerberos-Rechte und Gruppenmitgliedschaften anzeigen',
+    command: 'whoami /all',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'Domänenbenutzer-Konto auf Details und Sperrstatus prüfen',
+    command: 'net user {{BENUTZERNAME}} /domain',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'Gesperrtes Active Directory Benutzerkonto entsperren (PowerShell)',
+    command: 'Unlock-ADAccount -Identity "{{BENUTZERNAME}}"',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'AD-Benutzer nach Name suchen und Status anzeigen (PowerShell)',
+    command: 'Get-ADUser -Filter "Name -like \'*{{NAME}}*\'" -Properties Enabled, LastLogonDate, mail | Select-Object Name, SamAccountName, Enabled, mail',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'Alle Mitglieder einer Active Directory Gruppe auflisten',
+    command: 'Get-ADGroupMember -Identity "{{GRUPPENNAME}}" | Select-Object Name, SamAccountName',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'Domänencontroller-Diagnose durchführen (DCDiag)',
+    command: 'dcdiag /v /c /d /e',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'Active Directory Replikationsstatus zwischen Domain Controllern prüfen',
+    command: 'repadmin /showrepl * /csv > C:\\repl_status.csv',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'Sichere Verbindung zum Domänencontroller testen (Netlogon)',
+    command: 'nltest /sc_query:{{DOMAIN_NAME}}',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'PDC-Emulator und FSMO-Rolleninhaber ermitteln',
+    command: 'netdom query fsmo',
+  },
+  {
+    category: 'Active Directory & Windows Server',
+    title: 'DNS-Server-Dienst auf Domain Controller neu starten',
+    command: 'Restart-Service -Name DNS -Force',
   },
 
   // =========================================================================
@@ -245,7 +339,7 @@ export const STARTER_COMMANDS: CommandInput[] = [
   {
     category: 'Git Versionsverwaltung',
     title: 'Kompaktes Commit-Log mit grafischer Verzweigung anzeigen',
-    command: 'git log --oneline --graph --decorate --all -n 20',
+    command: 'git log --oneline --graph --decorate --all -n 25',
   },
   {
     category: 'Git Versionsverwaltung',
@@ -310,7 +404,7 @@ export const STARTER_COMMANDS: CommandInput[] = [
   {
     category: 'Git Versionsverwaltung',
     title: 'Git Reflog: Sicherheitsnetz für verloren geglaubte Commits einsehen',
-    command: 'git reflog -n 25',
+    command: 'git reflog -n 30',
   },
   {
     category: 'Git Versionsverwaltung',
@@ -326,6 +420,16 @@ export const STARTER_COMMANDS: CommandInput[] = [
     category: 'Git Versionsverwaltung',
     title: 'Bereits gemergte lokale Branches auf einen Schlag löschen',
     command: 'git branch --merged | grep -v "\\*" | xargs -n 1 git branch -d',
+  },
+  {
+    category: 'Git Versionsverwaltung',
+    title: 'Ungestagte Änderungen und nicht getrackte Dateien verwerfen (Clean)',
+    command: 'git clean -fd',
+  },
+  {
+    category: 'Git Versionsverwaltung',
+    title: 'Unterschiede zum Hauptzweig (main) übersichtlich anzeigen',
+    command: 'git diff main...HEAD',
   },
 
   // =========================================================================
@@ -343,7 +447,7 @@ export const STARTER_COMMANDS: CommandInput[] = [
   },
   {
     category: 'Docker & Container',
-    title: 'Interaktive Shell in einem laufenden Container öffnen',
+    title: 'Interaktive Bash/Sh-Shell in einem laufenden Container öffnen',
     command: 'docker exec -it {{CONTAINER_NAME}} /bin/sh',
   },
   {
@@ -363,6 +467,11 @@ export const STARTER_COMMANDS: CommandInput[] = [
   },
   {
     category: 'Docker & Container',
+    title: 'Docker Compose Stack neu bauen und ohne Cache starten',
+    command: 'docker compose up -d --build --force-recreate',
+  },
+  {
+    category: 'Docker & Container',
     title: 'Ungenutzte Images, Container, Netzwerke und Build-Caches bereinigen',
     command: 'docker system prune -af --volumes',
   },
@@ -371,47 +480,269 @@ export const STARTER_COMMANDS: CommandInput[] = [
     title: 'Ressourcenverbrauch aller laufenden Container live anzeigen (CPU/RAM)',
     command: 'docker stats --no-stream',
   },
+  {
+    category: 'Docker & Container',
+    title: 'IP-Adresse eines laufenden Containers ermitteln',
+    command: 'docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" {{CONTAINER_NAME}}',
+  },
+  {
+    category: 'Docker & Container',
+    title: 'Dateien aus einem Container auf den Host kopieren',
+    command: 'docker cp {{CONTAINER_NAME}}:{{CONTAINER_PFAD}} {{HOST_PFAD}}',
+  },
+  {
+    category: 'Docker & Container',
+    title: 'Docker Volume-Speicherplatz anzeigen',
+    command: 'docker system df -v',
+  },
+  {
+    category: 'Docker & Container',
+    title: 'Image bauen mit Tag aus dem aktuellen Verzeichnis',
+    command: 'docker build -t {{IMAGE_NAME}}:{{TAG}} .',
+  },
 
   // =========================================================================
-  // 🌐 NETZWERK & CISCO
+  // ☸️ KUBERNETES & CLOUD-NATIVE
   // =========================================================================
   {
-    category: 'Netzwerk & Cisco',
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Alle Pods im aktuellen Namespace mit Status und Node auflisten',
+    command: 'kubectl get pods -o wide',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Pods über alle Namespaces hinweg anzeigen',
+    command: 'kubectl get pods -A',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Live-Logs eines Pods mit Zeitstempel mitverfolgen',
+    command: 'kubectl logs -f --tail=100 --timestamps {{POD_NAME}} -n {{NAMESPACE}}',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Interaktive Shell in einem Pod ausführen',
+    command: 'kubectl exec -it {{POD_NAME}} -n {{NAMESPACE}} -- /bin/sh',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Detaillierte Pod-Diagnose & Event-Historie einsehen (Describe)',
+    command: 'kubectl describe pod {{POD_NAME}} -n {{NAMESPACE}}',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Port-Forwarding von lokalem Port auf Service/Pod einrichten',
+    command: 'kubectl port-forward svc/{{SERVICE_NAME}} {{LOKALER_PORT}}:{{SERVICE_PORT}} -n {{NAMESPACE}}',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Rolling Restart eines Deployments durchführen',
+    command: 'kubectl rollout restart deployment/{{DEPLOYMENT_NAME}} -n {{NAMESPACE}}',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Rollout-Status eines Deployments überwachen',
+    command: 'kubectl rollout status deployment/{{DEPLOYMENT_NAME}} -n {{NAMESPACE}}',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Base64-kodierten Wert eines Kubernetes Secrets entschlüsseln',
+    command: 'kubectl get secret {{SECRET_NAME}} -n {{NAMESPACE}} -o jsonpath="{.data.{{KEY}}}" | base64 --decode',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'CPU- und RAM-Auslastung aller Nodes anzeigen (Metrics Server)',
+    command: 'kubectl top nodes',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'CPU- und RAM-Auslastung aller Pods anzeigen',
+    command: 'kubectl top pods -n {{NAMESPACE}} --sort-by=memory',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Aktiven Kubernetes Kontext wechseln (Cluster wechseln)',
+    command: 'kubectl config use-context {{KONTEXT_NAME}}',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Standard-Namespace für den aktuellen Kontext setzen',
+    command: 'kubectl config set-context --current --namespace={{NAMESPACE}}',
+  },
+  {
+    category: 'Kubernetes & Cloud-Native',
+    title: 'Ingress-Routen und Hostnamen anzeigen',
+    command: 'kubectl get ingress -A',
+  },
+
+  // =========================================================================
+  // 🐘 DATENBANKEN & CACHES (PostgreSQL, MySQL, Redis)
+  // =========================================================================
+  {
+    category: 'Datenbanken & Caches',
+    title: 'PostgreSQL: Vollständigen Dump einer Datenbank erstellen (pg_dump)',
+    command: 'pg_dump -U {{USER}} -h {{HOST}} -d {{DB_NAME}} -F c -b -v -f "{{DB_NAME}}_backup.dump"',
+  },
+  {
+    category: 'Datenbanken & Caches',
+    title: 'PostgreSQL: Dump in Ziel-Datenbank wiederherstellen (pg_restore)',
+    command: 'pg_restore -U {{USER}} -h {{HOST}} -d {{DB_NAME}} -v "{{DB_NAME}}_backup.dump"',
+  },
+  {
+    category: 'Datenbanken & Caches',
+    title: 'PostgreSQL: Aktive Datenbankverbindungen und laufende Abfragen prüfen',
+    command: 'psql -U {{USER}} -d {{DB_NAME}} -c "SELECT pid, usename, client_addr, state, query FROM pg_stat_activity WHERE state != \'idle\';"',
+  },
+  {
+    category: 'Datenbanken & Caches',
+    title: 'PostgreSQL: Datenbankgrößen aller Datenbanken abfragen',
+    command: 'psql -U {{USER}} -c "SELECT datname, pg_size_pretty(pg_database_size(datname)) FROM pg_database ORDER BY pg_database_size(datname) DESC;"',
+  },
+  {
+    category: 'Datenbanken & Caches',
+    title: 'MySQL / MariaDB: Dump einer Datenbank mit Struktur & Daten (mysqldump)',
+    command: 'mysqldump -u {{USER}} -p -h {{HOST}} {{DB_NAME}} > "{{DB_NAME}}_backup.sql"',
+  },
+  {
+    category: 'Datenbanken & Caches',
+    title: 'MySQL / MariaDB: SQL-Dump-Datei importieren',
+    command: 'mysql -u {{USER}} -p -h {{HOST}} {{DB_NAME}} < "{{DUMP_DATEI}}.sql"',
+  },
+  {
+    category: 'Datenbanken & Caches',
+    title: 'MySQL: Laufende Threads und langsame Abfragen anzeigen',
+    command: 'mysqladmin -u {{USER}} -p processlist',
+  },
+  {
+    category: 'Datenbanken & Caches',
+    title: 'Redis: Alle Befehle live in Echtzeit mitlesen (Monitor)',
+    command: 'redis-cli -h {{HOST}} -p {{PORT}} monitor',
+  },
+  {
+    category: 'Datenbanken & Caches',
+    title: 'Redis: Speicherverbrauch und Server-Statistiken abrufen',
+    command: 'redis-cli -h {{HOST}} -p {{PORT}} info memory',
+  },
+  {
+    category: 'Datenbanken & Caches',
+    title: 'Redis: Verbindung testen (Ping -> Pong)',
+    command: 'redis-cli -h {{HOST}} -p {{PORT}} ping',
+  },
+
+  // =========================================================================
+  // 🛡️ IT-SICHERHEIT, SSL & AUDITING
+  // =========================================================================
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'SSL/TLS-Zertifikat einer Remote-Domain und Ablaufdatum prüfen (OpenSSL)',
+    command: 'openssl s_client -connect {{DOMAIN}}:443 -servername {{DOMAIN}} 2>/dev/null | openssl x509 -noout -dates -subject -issuer',
+  },
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'Lokale Zertifikatsdatei auf Gültigkeit und Inhalte untersuchen',
+    command: 'openssl x509 -in {{ZERTIFIKAT_DATEI}}.crt -text -noout',
+  },
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'SHA-256 Fingerabdruck eines Zertifikats oder Public Keys berechnen',
+    command: 'openssl x509 -in {{ZERTIFIKAT_DATEI}}.crt -noout -fingerprint -sha256',
+  },
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'CSR (Certificate Signing Request) dekodieren und prüfen',
+    command: 'openssl req -in {{CSR_DATEI}}.csr -noout -text',
+  },
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'Neues modernes SSH-Schlüsselpaar generieren (Ed25519)',
+    command: 'ssh-keygen -t ed25519 -C "{{EMAIL}}"',
+  },
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'Nmap: Schneller SYN-Scan auf offene Ports eines Zielhosts',
+    command: 'sudo nmap -sS -T4 -p 1-65535 {{ZIEL_IP}}',
+  },
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'Nmap: Betriebssystem- und Versions-Erkennung durchführen',
+    command: 'sudo nmap -sV -O -T4 {{ZIEL_IP}}',
+  },
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'Fail2ban Status und gebannte IP-Adressen anzeigen',
+    command: 'sudo fail2ban-client status sshd',
+  },
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'IP-Adresse aus Fail2ban-Sperrliste manuell freigeben',
+    command: 'sudo fail2ban-client set sshd unbanip {{IP_ADRESSE}}',
+  },
+  {
+    category: 'IT-Sicherheit, SSL & Auditing',
+    title: 'Sudo-Berechtigungen des aktuellen Benutzers überprüfen',
+    command: 'sudo -l',
+  },
+
+  // =========================================================================
+  // 🌐 NETZWERK & DEEP TROUBLESHOOTING
+  // =========================================================================
+  {
+    category: 'Netzwerk & Deep Troubleshooting',
+    title: 'Detaillierte DNS-Auflösung mit allen Nameservern verfolgen (Dig Trace)',
+    command: 'dig +trace {{DOMAIN}}',
+  },
+  {
+    category: 'Netzwerk & Deep Troubleshooting',
     title: 'DNS-Abfrage mit allen Records (A, MX, TXT, NS) durchführen',
     command: 'nslookup -type=any {{DOMAIN}}',
   },
   {
-    category: 'Netzwerk & Cisco',
-    title: 'Detaillierte DNS-Auflösung mit Dig (Linux/macOS)',
-    command: 'dig +trace {{DOMAIN}}',
-  },
-  {
-    category: 'Netzwerk & Cisco',
+    category: 'Netzwerk & Deep Troubleshooting',
     title: 'Netzwerkroute zu einem Zielserver schrittweise verfolgen (Traceroute)',
     command: 'tracert {{ZIEL_HOST_ODER_IP}}',
   },
   {
-    category: 'Netzwerk & Cisco',
+    category: 'Netzwerk & Deep Troubleshooting',
+    title: 'MTR: Interaktives kontinuierliches Traceroute mit Paketverlustrate',
+    command: 'mtr --report --report-cycles 10 {{ZIEL_HOST_ODER_IP}}',
+  },
+  {
+    category: 'Netzwerk & Deep Troubleshooting',
+    title: 'Curl: Exakte Latenz-Aufschlüsselung (DNS, Connect, TLS, TTFB)',
+    command: 'curl -w "DNS: %{time_namelookup}s | Connect: %{time_connect}s | TLS: %{time_appconnect}s | TTFB: %{time_starttransfer}s | Total: %{time_total}s\\n" -o /dev/null -s {{URL}}',
+  },
+  {
+    category: 'Netzwerk & Deep Troubleshooting',
+    title: 'Paketmitschnitt auf einem Interface für einen Port aufzeichnen (Tcpdump)',
+    command: 'sudo tcpdump -i {{INTERFACE}} -nn -s0 -v port {{PORT}} -w capture.pcap',
+  },
+  {
+    category: 'Netzwerk & Deep Troubleshooting',
+    title: 'ARP-Tabelle des lokalen Systems anzeigen',
+    command: 'arp -a',
+  },
+  {
+    category: 'Netzwerk & Deep Troubleshooting',
     title: 'Cisco IOS: Interface-Status und IP-Adressen im kompakten Überblick',
     command: 'show ip interface brief',
   },
   {
-    category: 'Netzwerk & Cisco',
+    category: 'Netzwerk & Deep Troubleshooting',
     title: 'Cisco IOS: Aktuell aktive Konfiguration im RAM anzeigen',
     command: 'show running-config',
   },
   {
-    category: 'Cisco',
+    category: 'Netzwerk & Deep Troubleshooting',
     title: 'Cisco IOS: Laufende Konfiguration im NVRAM persistent speichern',
     command: 'copy running-config startup-config',
   },
   {
-    category: 'Netzwerk & Cisco',
+    category: 'Netzwerk & Deep Troubleshooting',
     title: 'Cisco IOS: Routing-Tabelle mit allen Routen anzeigen',
     command: 'show ip route',
   },
   {
-    category: 'Netzwerk & Cisco',
+    category: 'Netzwerk & Deep Troubleshooting',
     title: 'Cisco IOS: VLAN-Übersicht und zugewiesene Switchports abfragen',
     command: 'show vlan brief',
   },
