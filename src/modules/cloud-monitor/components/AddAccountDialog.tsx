@@ -144,6 +144,9 @@ export function AddAccountDialog({ open, onOpenChange }: AddAccountDialogProps) 
                 <ExternalLink className="size-3.5" />
                 {isOAuthRedirecting ? 'Weiterleitung zu Google...' : 'Mit Google verbinden'}
               </Button>
+              <div className="rounded border border-blue-500/20 bg-blue-500/5 p-2 text-[11px] text-muted-foreground leading-relaxed">
+                <span className="font-semibold text-blue-400">Tipp bei Fehler 403 (Testphase):</span> Trage das gewünschte Google-Konto in deiner Google Cloud Console unter &bdquo;OAuth-Zustimmungsbildschirm &rarr; Testnutzer&ldquo; ein, oder nutze unten die manuelle Erfassung.
+              </div>
             </div>
           )}
 

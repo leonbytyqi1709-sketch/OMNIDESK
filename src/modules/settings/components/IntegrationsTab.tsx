@@ -93,7 +93,7 @@ export function IntegrationsTab() {
         <CardContent>
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/30 p-3 text-xs text-muted-foreground">
             <p className="max-w-xl">
-              Verknüpfe echte Konten per sicherem Google OAuth2 oder Live-MEGA-Sitzung. Die Daten fließen automatisch in das Cloud-Monitoring und den Gmail-Klon ein.
+              Verknüpfe echte Konten per sicherem Google OAuth2 oder Live-MEGA-Sitzung. Die Daten fließen automatisch in das Cloud-Monitoring und den Gmail-Klon ein. (Tipp bei Fehler 403: Im Google-Testmodus müssen weitere Konten in der Cloud Console als Testnutzer eingetragen sein).
             </p>
             <Button
               size="sm"
