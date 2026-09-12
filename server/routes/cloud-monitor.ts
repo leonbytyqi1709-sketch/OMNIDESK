@@ -121,8 +121,8 @@ cloudMonitorRoute.get('/overview', async (c) => {
   let megaCapacity = BigInt(0)
 
   for (const acc of accounts) {
-    const used = BigInt(acc.storageUsedBytes || '0')
-    const total = BigInt(acc.storageTotalBytes || '0')
+    const used = BigInt(Math.round(parseFloat(acc.storageUsedBytes || '0')))
+    const total = BigInt(Math.round(parseFloat(acc.storageTotalBytes || '0')))
     totalUsed += used
     totalCapacity += total
 

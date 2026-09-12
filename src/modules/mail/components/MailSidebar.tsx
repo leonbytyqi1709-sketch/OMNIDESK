@@ -61,7 +61,14 @@ export function MailSidebar({
             <SelectContent>
               {accounts.map((acc) => (
                 <SelectItem key={acc.id} value={acc.id} className="text-xs">
-                  {acc.label || acc.email}
+                  <div className="flex items-center justify-between w-full gap-2">
+                    <span className="truncate">{acc.label || acc.email}</span>
+                    {acc.hasToken && (
+                      <span className="rounded bg-emerald-500/15 px-1 py-0.2 text-[9px] font-semibold text-emerald-400">
+                        Live
+                      </span>
+                    )}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>

@@ -49,7 +49,7 @@ export function MailDetail({ message, onReply, onClose }: MailDetailProps) {
 
   const handleToggleStar = () => {
     updateMutation.mutate(
-      { id: message.id, isStarred: !message.isStarred },
+      { id: message.id, accountId: message.accountId, isStarred: !message.isStarred },
       {
         onSuccess: () => {
           toast.success(message.isStarred ? 'Markierung entfernt' : 'E-Mail markiert')
@@ -60,7 +60,7 @@ export function MailDetail({ message, onReply, onClose }: MailDetailProps) {
 
   const handleToggleUnread = () => {
     updateMutation.mutate(
-      { id: message.id, isRead: false },
+      { id: message.id, accountId: message.accountId, isRead: false },
       {
         onSuccess: () => {
           toast.success('Als ungelesen markiert')
@@ -71,12 +71,15 @@ export function MailDetail({ message, onReply, onClose }: MailDetailProps) {
   }
 
   const handleDelete = () => {
-    deleteMutation.mutate(message.id, {
-      onSuccess: () => {
-        toast.success('E-Mail in den Papierkorb verschoben')
-        if (onClose) onClose()
+    deleteMutation.mutate(
+      { id: message.id, accountId: message.accountId },
+      {
+        onSuccess: () => {
+          toast.success('E-Mail in den Papierkorb verschoben')
+          if (onClose) onClose()
+        },
       },
-    })
+    )
   }
 
   const initials = message.fromName

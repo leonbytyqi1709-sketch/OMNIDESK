@@ -21,6 +21,25 @@
     * Frontend: Direkter "Mit Google verbinden"-Button in IntegrationsTab &
       AddAccountDialog, Rueckkehr-Feedback via Sonner Toasts
 
+  - GMAIL-OPTIMIERUNG & KATEGORISIERUNG (12.09.2026 Nachmittag):
+    * Allgemeiner Posteingang bereinigt: Werbe- & Social-Anzeigen
+      (-category:promotions -category:social) werden standardmaessig aus
+      dem allgemeinen Posteingang gefiltert, sodass wichtige Mails sichtbar sind.
+    * Posteingangs-Kategorien-Tabs in MailList (Allgemein, Alle, Werbung, Updates).
+    * Mengenbegrenzung aufgehoben: Bis zu 50 Nachrichten werden parallel
+      abgerufen (nicht mehr nur 10!).
+    * Chronologische Sortierung: Neueste Nachrichten garantiert ganz oben.
+    * Echter Body-Abruf (format=full) in GET /api/mail/messages/:id mit
+      HTML-Dekodierung aus base64url.
+    * Automatische Auswahl des echten verbundenen Google-Kontos in MailPage.
+    * Live-Statusanzeige ("Live"-Badge) im Account-Dropdown.
+    * Echter Sync von Stern-Markierung und Papierkorb zur Gmail-API.
+
+  - BUGFIX CLOUD-MONITORING (Fehler 500 behoben):
+    * server/routes/cloud-monitor.ts: Fließkomma-String bei BigInt gefixt
+      (Math.round(parseFloat(...))), wodurch /api/cloud-monitor/overview
+      jetzt wieder 100% sauber laeuft.
+
   - Vollstaendige Live-MEGA-Cloud-Anbindung:
     * megajs SDK & @types/megajs installiert
     * server/mega-auth.ts: connectMegaAccount() fuer Live-Authentifizierung,

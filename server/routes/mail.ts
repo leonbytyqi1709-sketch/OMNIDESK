@@ -7,7 +7,7 @@ import { getValidGoogleAccessToken } from '../google-auth.ts'
 
 export const mailRoute = new Hono()
 
-// Simulierter Speicher für In-Memory-Demo-Emails, falls keine echten Google OAuth Tokens vorhanden sind
+// Simulierter Speicher für In-Memory-Demo-Emails
 interface DemoMessage {
   id: string
   accountId: string
@@ -71,63 +71,58 @@ const initialDemoMessages: DemoMessage[] = [
     isStarred: false,
     folder: 'inbox',
   },
-  {
-    id: 'msg-3',
-    accountId: 'demo',
-    fromName: 'Let\'s Encrypt Expiry Bot',
-    fromEmail: 'expiry@letsencrypt.org',
-    toEmail: 'admin@omnidesk.app',
-    subject: 'Zertifikatsverlängerung für *.kunde-portal.de in 14 Tagen fällig',
-    snippet: 'Ihr TLS-Zertifikat für *.kunde-portal.de läuft am 26. September 2026 ab. Bitte Certbot-Cron prüfen.',
-    bodyHtml: `<div style="font-family: sans-serif; line-height: 1.6;">
-      <p>Hallo Administrator,</p>
-      <p>Ihr SSL/TLS-Zertifikat für die folgenden Domains läuft in <strong>14 Tagen</strong> ab:</p>
-      <pre style="background: #27272a; padding: 8px; border-radius: 4px;">*.kunde-portal.de\nkunde-portal.de</pre>
-      <p>Sofern Sie automatische ACME-Challenge / Certbot nutzen, sollte die Verlängerung in Kürze automatisch initiiert werden.</p>
-    </div>`,
-    date: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    isRead: true,
-    isStarred: false,
-    folder: 'inbox',
-  },
-  {
-    id: 'msg-4',
-    accountId: 'demo',
-    fromName: 'Markus Weber (Geschäftsführung)',
-    fromEmail: 'm.weber@beispiel-gmbh.de',
-    toEmail: 'admin@omnidesk.app',
-    subject: 'Neuer Mitarbeiter im Vertrieb ab 01.10. - Arbeitsplatz & Berechtigungen',
-    snippet: 'Hallo Leon, ab dem ersten Oktober fängt Herr Schmidt bei uns an. Kannst du den Laptop und die VPN-Accounts vorbereiten?',
-    bodyHtml: `<div style="font-family: sans-serif; line-height: 1.6;">
-      <p>Hallo Leon,</p>
-      <p>ab dem 01.10. verstärkt uns Herr Jonas Schmidt im Vertriebsaußendienst.</p>
-      <p>Könntest du bitte Folgendes vorbereiten?</p>
-      <ul>
-        <li>ThinkPad T14 mit aktuellem Windows 11 Image & VPN-Client</li>
-        <li>E-Mail-Adresse: j.schmidt@beispiel-gmbh.de</li>
-        <li>Zugriff auf unser ERP und das Kunden-Wiki</li>
-      </ul>
-      <p>Vielen Dank und beste Grüße,<br>Markus</p>
-    </div>`,
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    isRead: false,
-    isStarred: true,
-    folder: 'inbox',
-  },
 ]
 
-// In-Memory-State pro laufendem Server-Prozess
 let demoStore = [...initialDemoMessages]
 
-/** Google-Accounts des Nutzers abrufen. */
+function getHeader(headers: Array<{ name: string; value: string }> | undefined, name: string): string {
+  return headers?.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? ''
+}
+
+function extractBody(payload: Record<string, unknown> | undefined): string {
+  if (!payload) return ''
+  const body = payload.body as { data?: string } | undefined
+  if (body?.data) {
+    return Buffer.from(body.data, 'base64url').toString('utf-8')
+  }
+
+  const parts = payload.parts as Array<Record<string, unknown>> | undefined
+  if (parts && Array.isArray(parts)) {
+    // 1. Bevorzuge HTML
+    const htmlPart = parts.find((p) => p.mimeType === 'text/html')
+    const htmlBody = htmlPart?.body as { data?: string } | undefined
+    if (htmlBody?.data) {
+      return Buffer.from(htmlBody.data, 'base64url').toString('utf-8')
+    }
+
+    // 2. Fallback auf reinen Text
+    const textPart = parts.find((p) => p.mimeType === 'text/plain')
+    const textBody = textPart?.body as { data?: string } | undefined
+    if (textBody?.data) {
+      const plain = Buffer.from(textBody.data, 'base64url').toString('utf-8')
+      return `<div style="white-space: pre-wrap; font-family: sans-serif; line-height: 1.6;">${plain}</div>`
+    }
+
+    // 3. Rekursiv in Unterteilen (multipart/alternative, etc.) suchen
+    for (const part of parts) {
+      const nested = extractBody(part)
+      if (nested) return nested
+    }
+  }
+
+  return ''
+}
+
+/** Google-Accounts des Nutzers abrufen (echte Konten zuerst sortiert). */
 mailRoute.get('/accounts', async (c) => {
-  const accounts = await db
+  const rows = await db
     .select({
       id: connectedAccounts.id,
       email: connectedAccounts.email,
       label: connectedAccounts.label,
       avatarUrl: connectedAccounts.avatarUrl,
       provider: connectedAccounts.provider,
+      hasToken: connectedAccounts.refreshToken,
     })
     .from(connectedAccounts)
     .where(
@@ -137,16 +132,29 @@ mailRoute.get('/accounts', async (c) => {
       ),
     )
 
+  const accounts = rows.map((r) => ({
+    id: r.id,
+    email: r.email,
+    label: r.label,
+    avatarUrl: r.avatarUrl,
+    provider: r.provider,
+    hasToken: Boolean(r.hasToken),
+  }))
+
+  // Echte autorisierte Konten mit Google OAuth zuerst listen!
+  accounts.sort((a, b) => (b.hasToken ? 1 : 0) - (a.hasToken ? 1 : 0))
+
   return c.json(accounts)
 })
 
-/** Nachrichtenliste abrufen. */
+/** Nachrichtenliste abrufen mit echter Gmail-Kategorisierung und bis zu 50 Nachrichten. */
 mailRoute.get('/messages', async (c) => {
   const folder = (c.req.query('folder') ?? 'inbox') as 'inbox' | 'sent' | 'starred' | 'trash'
   const accountId = c.req.query('accountId')
+  const category = c.req.query('category') || 'primary'
   const query = c.req.query('q')?.toLowerCase().trim()
+  const limit = Math.min(100, Math.max(10, Number(c.req.query('limit') || 50)))
 
-  // Prüfen, ob der Nutzer einen echten Google-Account mit Access-Token hat
   if (accountId) {
     const [acc] = await db
       .select()
@@ -158,24 +166,58 @@ mailRoute.get('/messages', async (c) => {
         ),
       )
 
-    // Falls ein echtes Google Token existiert, versuchen wir die Gmail API anzufragen
+    // Echte Gmail API anfragen
     if (acc?.accessToken || acc?.refreshToken) {
       try {
         const accessToken = await getValidGoogleAccessToken(acc)
+
+        // Präziser Suchfilter je nach Ordner und Kategorie
+        let q = ''
+        if (folder === 'sent') {
+          q = 'in:sent'
+        } else if (folder === 'starred') {
+          q = 'is:starred'
+        } else if (folder === 'trash') {
+          q = 'in:trash'
+        } else {
+          // Posteingang: Kategorien steuern
+          if (category === 'primary') {
+            // Reiner Allgemeiner Posteingang OHNE Werbung und OHNE Social-Spam
+            q = 'in:inbox -category:promotions -category:social'
+          } else if (category === 'promotions') {
+            // Werbung / Anzeigen
+            q = 'in:inbox category:promotions'
+          } else if (category === 'social') {
+            // Social Media
+            q = 'in:inbox category:social'
+          } else if (category === 'updates') {
+            // Benachrichtigungen & Alerts
+            q = 'in:inbox category:updates'
+          } else {
+            // 'all': Alles im Posteingang
+            q = 'in:inbox'
+          }
+        }
+
+        if (query) {
+          q += ` ${query}`
+        }
+
         const gmailRes = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q=${encodeURIComponent(
-            folder === 'starred' ? 'is:starred' : folder === 'sent' ? 'in:sent' : folder === 'trash' ? 'in:trash' : 'in:inbox',
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${limit}&q=${encodeURIComponent(
+            q.trim(),
           )}`,
           { headers: { Authorization: `Bearer ${accessToken}` } },
         )
+
         if (gmailRes.ok) {
           const list = (await gmailRes.json()) as { messages?: Array<{ id: string; threadId: string }> }
-          if (list.messages) {
-            // Details der ersten Nachrichten laden
+          if (list.messages && list.messages.length > 0) {
+            // Details aller gefundenen Nachrichten parallel laden
             const detailed = await Promise.all(
-              list.messages.slice(0, 10).map(async (m) => {
+              list.messages.map(async (m) => {
                 const itemRes = await fetch(
-                  `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata`,
+                  `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=To`,
                   { headers: { Authorization: `Bearer ${accessToken}` } },
                 )
                 if (itemRes.ok) {
@@ -186,18 +228,23 @@ mailRoute.get('/messages', async (c) => {
                     labelIds?: string[]
                     payload?: { headers?: Array<{ name: string; value: string }> }
                   }
-                  const getHeader = (name: string) =>
-                    item.payload?.headers?.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? ''
+                  const fromRaw = getHeader(item.payload?.headers, 'From')
+                  const subject = getHeader(item.payload?.headers, 'Subject') || '(Kein Betreff)'
+                  const to = getHeader(item.payload?.headers, 'To') || acc.email
+                  const dateIso = item.internalDate
+                    ? new Date(Number(item.internalDate)).toISOString()
+                    : new Date().toISOString()
+
                   return {
                     id: item.id,
                     accountId: acc.id,
-                    fromName: getHeader('From').replace(/<.*>/, '').trim() || getHeader('From'),
-                    fromEmail: getHeader('From'),
-                    toEmail: getHeader('To') || acc.email,
-                    subject: getHeader('Subject') || '(Kein Betreff)',
-                    snippet: item.snippet,
-                    bodyHtml: `<p>${item.snippet}</p>`,
-                    date: new Date(Number(item.internalDate)).toISOString(),
+                    fromName: fromRaw.replace(/<.*>/, '').trim() || fromRaw,
+                    fromEmail: fromRaw,
+                    toEmail: to,
+                    subject,
+                    snippet: item.snippet || '',
+                    bodyHtml: `<p>${item.snippet || ''}</p>`,
+                    date: dateIso,
                     isRead: !item.labelIds?.includes('UNREAD'),
                     isStarred: item.labelIds?.includes('STARRED') ?? false,
                     folder,
@@ -206,11 +253,19 @@ mailRoute.get('/messages', async (c) => {
                 return null
               }),
             )
-            return c.json(detailed.filter(Boolean))
+
+            // Streng nach Datum absteigend sortieren (neueste ZUERST!)
+            const results = detailed.filter(Boolean) as Array<DemoMessage>
+            results.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+            return c.json(results)
           }
+
+          // Keine Mails im Filter
+          return c.json([])
         }
       } catch {
-        // Fallback auf Demo-Nachrichten bei API-Fehler
+        // Fallback auf Demo bei API-Fehler
       }
     }
   }
@@ -231,18 +286,90 @@ mailRoute.get('/messages', async (c) => {
     )
   }
 
+  result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   return c.json(result)
 })
 
 /** Einzelne Nachricht mit vollständigem Body abrufen. */
 mailRoute.get('/messages/:id', async (c) => {
   const id = c.req.param('id')
+  const accountId = c.req.query('accountId')
+
+  // Falls ein Google-Konto angegeben ist, echten Body via Gmail API laden
+  if (accountId && accountId !== 'demo') {
+    const [acc] = await db
+      .select()
+      .from(connectedAccounts)
+      .where(
+        and(
+          eq(connectedAccounts.id, accountId),
+          eq(connectedAccounts.userId, c.get('userId')),
+        ),
+      )
+
+    if (acc && (acc.accessToken || acc.refreshToken)) {
+      try {
+        const accessToken = await getValidGoogleAccessToken(acc)
+        const res = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        )
+        if (res.ok) {
+          const m = (await res.json()) as {
+            id: string
+            snippet: string
+            internalDate: string
+            labelIds?: string[]
+            payload?: Record<string, unknown>
+          }
+
+          const headers = (m.payload?.headers ?? []) as Array<{ name: string; value: string }>
+          const fromRaw = getHeader(headers, 'From')
+          const subject = getHeader(headers, 'Subject') || '(Kein Betreff)'
+          const to = getHeader(headers, 'To') || acc.email
+          const bodyHtml = extractBody(m.payload) || `<p>${m.snippet || ''}</p>`
+          const dateIso = m.internalDate
+            ? new Date(Number(m.internalDate)).toISOString()
+            : new Date().toISOString()
+
+          // Bei Google automatisch als gelesen markieren
+          if (m.labelIds?.includes('UNREAD')) {
+            fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}/modify`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
+            }).catch(() => {})
+          }
+
+          return c.json({
+            id: m.id,
+            accountId: acc.id,
+            fromName: fromRaw.replace(/<.*>/, '').trim() || fromRaw,
+            fromEmail: fromRaw,
+            toEmail: to,
+            subject,
+            snippet: m.snippet || '',
+            bodyHtml,
+            date: dateIso,
+            isRead: true,
+            isStarred: m.labelIds?.includes('STARRED') ?? false,
+            folder: m.labelIds?.includes('SENT') ? 'sent' : 'inbox',
+          })
+        }
+      } catch {
+        // Fallback
+      }
+    }
+  }
+
   const msg = demoStore.find((m) => m.id === id)
   if (!msg) {
     return c.json({ error: 'Nachricht nicht gefunden' }, 404)
   }
 
-  // Als gelesen markieren
   msg.isRead = true
   return c.json(msg)
 })
@@ -319,7 +446,7 @@ mailRoute.post('/send', async (c) => {
           return c.json(newMsg, 201)
         }
       } catch {
-        // Fallback auf DemoStore bei Netzwerk- oder Berechtigungsfehlern
+        // Fallback auf DemoStore bei Netzwerkfehlern
       }
     }
   }
@@ -343,9 +470,10 @@ mailRoute.post('/send', async (c) => {
   return c.json(newMsg, 201)
 })
 
-/** Status der Nachricht aktualisieren (isRead, isStarred, folder). */
+/** Status der Nachricht aktualisieren (isRead, isStarred, folder) bei Google & Demo. */
 mailRoute.put('/messages/:id', async (c) => {
   const updateInput = z.object({
+    accountId: z.string().optional(),
     isRead: z.boolean().optional(),
     isStarred: z.boolean().optional(),
     folder: z.enum(['inbox', 'sent', 'starred', 'trash']).optional(),
@@ -357,30 +485,94 @@ mailRoute.put('/messages/:id', async (c) => {
   }
 
   const id = c.req.param('id')
-  const msg = demoStore.find((m) => m.id === id)
-  if (!msg) {
-    return c.json({ error: 'Nachricht nicht gefunden' }, 404)
+  const { accountId, isRead, isStarred, folder } = parsed.data
+
+  if (accountId && accountId !== 'demo') {
+    const [acc] = await db
+      .select()
+      .from(connectedAccounts)
+      .where(
+        and(
+          eq(connectedAccounts.id, accountId),
+          eq(connectedAccounts.userId, c.get('userId')),
+        ),
+      )
+
+    if (acc && (acc.accessToken || acc.refreshToken)) {
+      try {
+        const accessToken = await getValidGoogleAccessToken(acc)
+        const addLabelIds: string[] = []
+        const removeLabelIds: string[] = []
+
+        if (isStarred === true) addLabelIds.push('STARRED')
+        if (isStarred === false) removeLabelIds.push('STARRED')
+        if (isRead === false) addLabelIds.push('UNREAD')
+        if (isRead === true) removeLabelIds.push('UNREAD')
+
+        if (addLabelIds.length > 0 || removeLabelIds.length > 0) {
+          await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}/modify`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ addLabelIds, removeLabelIds }),
+          })
+        }
+      } catch {
+        // Fallback
+      }
+    }
   }
 
-  if (parsed.data.isRead !== undefined) msg.isRead = parsed.data.isRead
-  if (parsed.data.isStarred !== undefined) msg.isStarred = parsed.data.isStarred
-  if (parsed.data.folder !== undefined) msg.folder = parsed.data.folder
+  const msg = demoStore.find((m) => m.id === id)
+  if (msg) {
+    if (isRead !== undefined) msg.isRead = isRead
+    if (isStarred !== undefined) msg.isStarred = isStarred
+    if (folder !== undefined) msg.folder = folder
+    return c.json(msg)
+  }
 
-  return c.json(msg)
+  return c.json({ ok: true, id })
 })
 
-/** Nachricht löschen (in Papierkorb verschieben oder endgültig entfernen). */
+/** Nachricht löschen / in den Papierkorb verschieben bei Google & Demo. */
 mailRoute.delete('/messages/:id', async (c) => {
   const id = c.req.param('id')
-  const idx = demoStore.findIndex((m) => m.id === id)
-  if (idx === -1) {
-    return c.json({ error: 'Nachricht nicht gefunden' }, 404)
+  const accountId = c.req.query('accountId')
+
+  if (accountId && accountId !== 'demo') {
+    const [acc] = await db
+      .select()
+      .from(connectedAccounts)
+      .where(
+        and(
+          eq(connectedAccounts.id, accountId),
+          eq(connectedAccounts.userId, c.get('userId')),
+        ),
+      )
+
+    if (acc && (acc.accessToken || acc.refreshToken)) {
+      try {
+        const accessToken = await getValidGoogleAccessToken(acc)
+        await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}/trash`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        return c.json({ ok: true })
+      } catch {
+        // Fallback
+      }
+    }
   }
 
-  if (demoStore[idx].folder === 'trash') {
-    demoStore.splice(idx, 1)
-  } else {
-    demoStore[idx].folder = 'trash'
+  const idx = demoStore.findIndex((m) => m.id === id)
+  if (idx !== -1) {
+    if (demoStore[idx].folder === 'trash') {
+      demoStore.splice(idx, 1)
+    } else {
+      demoStore[idx].folder = 'trash'
+    }
   }
 
   return c.json({ ok: true })
