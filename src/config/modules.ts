@@ -1,5 +1,6 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import {
+  Activity,
   CalendarDays,
   Cloud,
   Contact,
@@ -125,6 +126,15 @@ export const moduleRegistry: ModuleDefinition[] = [
     path: '/links',
     icon: Link2,
     component: lazy(() => import('@/modules/links')),
+    toggleable: true,
+    category: 'it-tools',
+  },
+  {
+    id: 'uptime',
+    title: 'Uptime-Monitor',
+    path: '/uptime',
+    icon: Activity,
+    component: lazy(() => import('@/modules/uptime')),
     toggleable: true,
     category: 'it-tools',
   },

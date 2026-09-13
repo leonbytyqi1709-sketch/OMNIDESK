@@ -6,6 +6,68 @@
 =====================================================================
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ UPDATE 12.09.2026 (Abend-Session: Power-Befehle, Palette, Glows & Feierabend)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ERLEDIGT:
+  - BEFEHLSBIBLIOTHEK AUF 160+ PROFI-BEFEHLE ERWEITERT:
+    * starter-library.ts mit über 160 praxisnahen Befehlen für:
+      - ☸️ Kubernetes & Cloud-Native (Pods, Logs, Exec, Port-Forward, Secrets, Rolling Restarts)
+      - 🛡️ IT-Sicherheit & SSL (OpenSSL Cert-Expiry, Fingerprints, Nmap SYN-Scans, Fail2ban)
+      - 🐘 Datenbanken (PostgreSQL pg_dump/restore/queries, MySQL, Redis Live-Monitor & Info)
+      - 🏢 Active Directory & Windows Server (gpupdate /force, gpresult, User entsperren, DCDiag)
+      - 🐧 Linux & Ubuntu Server (Systemd, Journalctl Follow, ss/lsof Ports, du/find, Rsync/Tar)
+      - 🪟 Windows Terminal & PowerShell (ipconfig, DNS, SFC/DISM, Taskkill, Winget, BitLocker)
+      - 🌿 Git Power-Tools (Rebase, Reflog-Recovery, Stash, Cherry-Pick, Hard/Soft Reset)
+      - 🐳 Docker & Compose (Logs -f, Exec, Volume Backup, Prune, IP Inspect)
+      - 🌐 Netzwerk & Troubleshooting (dig +trace, MTR Loss-Check, Curl Latency, Cisco IOS)
+
+  - OPTISCHE MODERNISIERUNG DER BEFEHLSBIBLIOTHEK:
+    * Leuchtende Inline-Parameter-Chips: Platzhalter wie {{port}} oder {{container_id}}
+      werden im Monospace-Code als farbige Badges hervorgehoben
+    * Monospace Terminal-Box mit Prompt-Symbol ($ für Linux/Docker, > für Windows)
+    * Klick auf Codezeile kopiert sofort oder öffnet den Parameter-Dialog
+    * ⭐ Favoriten-System: Klick auf Stern pinnt Befehle in localStorage;
+      eigener Filter-Tab "⭐ Favoriten (X)"
+    * 📥 Markdown-Export: Download aller gefilterten Befehle als formatiertes Cheatsheet (.md)
+    * Interaktiver CommandParamDialog zum Ausfüllen von Platzhaltern mit Live-Vorschau
+
+  - GLOBALE COMMAND-PALETTE (Strg + K / Cmd + K) VERVOLLSTÄNDIGT:
+    * Durchsucht alle 160+ Befehle sowie selbst angelegte Nutzer-Befehle
+    * Befehle ohne Parameter werden per Klick/Enter sofort kopiert
+    * Befehle mit Parametern öffnen nahtlos den CommandParamDialog!
+
+  - HIGH-END GLOWS & GLASSMORPHISM-DESIGN:
+    * Ambient-Glow Sphären: Subtile Radial-Gradienten (#230d8f & #cf0a0a) im Hintergrund
+      für immersive Raumtiefe
+    * Glassmorphism-Sidebar: bg-card/85 backdrop-blur-xl mit leuchtendem Active-Pill
+    * Bento-Karten: card-hover-glow Utility mit sanftem Glühschatten bei Hover
+    * Hero-Greeting: Verstärkte Gradient-Auren auf dem Begrüßungs-Widget
+
+  - AUFGABEN & PROJEKTE:
+    * Unteraufgaben-Checkliste (subtasks) in Tasks mit Fortschrittsbalken ("X von Y erledigt")
+    * Tagging-System (tags) für Aufgaben und Projekte in Schema, API, Dialogen & Kacheln
+
+  - 3 NEUE BENTO-WIDGETS AUF DEM DASHBOARD:
+    * CloudStorageWidget (Drive + MEGA Füllstände, Schwellenwert-Status, Sync-All)
+    * QuickStatsWidget (Tages-Fokus: überfällige/heutige Tasks, nächster Termin, Pomodoro)
+    * TimezonesWidget (IT-Weltuhr mit Live-Sekundenuhr für Berlin, UTC, NY, Tokio)
+
+  - VERIFIKATION:
+    * npm run build: 100% grün (0 Fehler, PWA Service Worker generiert)
+    * npm run lint: 100% grün (0 Fehler)
+    * Git-Commits gesichert: 6b59152, 5b5bf8e, 777df5e
+
+ NEUE MODULE & FEATURE-IDEEN FUER DIE NAECHSTE SESSION:
+  1. Modul "IT-Toolbox & Dev-Converters" (/tools):
+     JWT-Debugger, Subnet/CIDR-Rechner, Base64/Hash, Cron-Visualizer, UUID-Gen.
+  2. Modul "Uptime & Service-Health-Monitor" (/uptime):
+     Websites/APIs/Ports monitoren (HTTP Status, Latenz/Ping, SSL-Tage) + Dashboard-Widget.
+  3. Floating Scratchpad (immer griffbereiter Schnellentwurf per Shortcut).
+  4. Cloud-Monitoring: Drag & Drop File-Upload zu Drive/MEGA.
+  5. Vercel-Deployment durchführen.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  UPDATE 12.09.2026 (Nachmittags-Session: Google OAuth2 & MEGA Live)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  ERLEDIGT:
@@ -58,17 +120,20 @@
     * Vite Proxy (/api -> :8787) verifiziert
     * npm run build: 100% gruen, PWA Service-Worker generiert
     * npm run lint: 100% gruen (0 Fehler)
-    * Live-Test ERFOLGREICH: 2 Google-Konten & 1 MEGA-Konto (30 GB)
-      sind in Neon DB verbunden, Quotas werden live berechnet!
+    * Git-Commit gesichert: 8dd42c0 auf Branch main
 
  NAECHSTE SCHRITTE & VERBESSERUNGSIDEEN:
-  1. Dashboard Widget fuer Cloud-Storage (Bento-Grid Widget)
-  2. Drag & Drop Datei-Upload zu Google Drive / MEGA
-  3. E-Mail Entwuerfe (Drafts) & Anhaenge im Gmail-Klon
-  4. Vercel-Deployment:
+  1. Live-Test durch Nutzer:
+     - Google OAuth-Button in Einstellungen -> Integrationen testen
+     - Echtes Google- oder MEGA-Konto verknuepfen und Quota-Balken pruefen
+  2. Vercel-Deployment:
      - Auf Vercel deployen (DATABASE_URL, VITE_CLERK_PUBLISHABLE_KEY,
        GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI)
-  5. Offline-Sync mit IndexedDB fuer Notizen & Tasks
+  3. Weitere Verbesserungsideen:
+     - Dashboard Widget fuer Cloud-Storage (Bento-Grid Widget)
+     - Drag & Drop Datei-Upload zu Google Drive / MEGA
+     - E-Mail Entwuerfe (Drafts) & Anhaenge im Gmail-Klon
+     - Offline-Sync mit IndexedDB fuer Notizen & Tasks
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

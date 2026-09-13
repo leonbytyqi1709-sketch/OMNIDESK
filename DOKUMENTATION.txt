@@ -6,7 +6,30 @@
  Spezifikation: omnidesk_spezifikation_v2.pdf (im Projektroot)
 =====================================================================
 
-0. SESSION VOM 12.09.2026 – PHASE 4, FEINSCHLIFF & LIVE-OAUTH/MEGA VOLLENDET
+0. SESSION VOM 12.09.2026 (ABEND) – 160+ BEFEHLE, PALETTE, CHECKLISTEN & GLOW-DESIGN
+---------------------------------------------------------------------
+ERLEDIGT (alle Builds gruen, 0 Lint-Fehler, Dev-Server aktiv):
+  [x] 160+ kuratierte IT-Befehle (Kubernetes, Security, DBs, Active Directory, Linux, Windows, Git, Docker, Netzwerk)
+  [x] CommandParamDialog: Live-Eingabe von Parametern {{...}} mit Vorschau & Kopieren
+  [x] Befehlsbibliothek Optik: Leuchtende Inline-Chips, Prompt-Symbole, Favoriten-System (⭐ Pins, localStorage) & Markdown-Export
+  [x] Command-Palette (Strg + K): Vollständige Integration aller 160+ Befehle; öffnet bei Parametern direkt den Dialog!
+  [x] High-End Glow-Design: Ambient-Glow Sphären im Hintergrund (#230d8f & #cf0a0a), Glassmorphism-Sidebar (backdrop-blur-xl), Bento Card-Hover-Glows
+  [x] Aufgaben-Modul: Unteraufgaben (Checklisten mit Checkbox & Löschen) + Tags mit Badge-Pills & Fortschrittsbalken ("X/Y erledigt")
+  [x] Projektmanagement: Tagging-System in Schema, API, Dialog & Board-Detailansicht
+  [x] 3 neue Dashboard-Widgets: CloudStorageWidget (Google Drive + MEGA), QuickStatsWidget (Tages-Fokus), TimezonesWidget (IT-Weltuhr)
+  [x] Cloud-Monitoring: Speicher-Schwellenwert-Alarme (>80% Warnung, >90% Kritisch)
+  [x] Git-Commits: 6b59152, 5b5bf8e, 777df5e
+
+NEUE MODUL-IDEEN & ROADMAP FUER DIE NAECHSTE SESSION:
+  1. Modul "IT-Toolbox & Dev-Converters" (/tools):
+     JWT-Debugger, Subnet/CIDR-Rechner, Base64/URL Encoder, Hash-Generator, Cron-Visualizer, UUID-Gen, JSON Formatter.
+  2. Modul "Uptime & Service-Health-Monitor" (/uptime):
+     Websites, APIs und Ports monitoren (Status, Latenz/Ping, SSL-Resttage) inkl. eigenem Dashboard-Widget.
+  3. Floating Scratchpad (immer griffbereiter Schnellentwurf per Shortcut).
+  4. Cloud-Monitoring: Drag & Drop File-Upload zu Drive & MEGA.
+  5. Vercel-Deployment durchführen.
+
+0b. SESSION VOM 12.09.2026 (NACHMITTAG) – PHASE 4, FEINSCHLIFF & LIVE-OAUTH/MEGA
 ---------------------------------------------------------------------
 ERLEDIGT (alle Builds gruen, 0 Lint-Fehler, Dev-Server aktiv):
   [x] Konfigurierbare Dashboard-Widgets (Zustand, Drag & Drop, Dialog,
@@ -25,19 +48,14 @@ ERLEDIGT (alle Builds gruen, 0 Lint-Fehler, Dev-Server aktiv):
       - Einstellungen Integrationen-Tab & Cloud-Monitoring mit
         Sync-Buttons je Account und Toast-Feedback
 
-  [x] Live-Test ERFOLGREICH abgeschlossen:
-      - 2 Google Drive & Gmail Konten per OAuth2 verbunden
-      - 1 MEGA Cloud Konto (30 GB) per Live-Sitzung verbunden
-      - Cloud-Monitoring & Quotas laufen 100% synchron
-
 NOCH ZU TUN:
-  1. Dashboard-Widget fuer Cloud-Storage (Bento-Grid Widget)
-  2. Drag & Drop Datei-Upload zu Google Drive / MEGA
-  3. E-Mail Entwuerfe (Drafts) & Anhaenge im Gmail-Klon
-  4. Vercel-Deployment durchfuehren (Nutzer-Aufgabe: Repo importieren,
+  1. Live-Test durch Nutzer:
+     - Google OAuth-Button in Einstellungen -> Integrationen testen
+     - Echtes Google- oder MEGA-Konto verknuepfen und Quota pruefen
+  2. Vercel-Deployment durchfuehren (Nutzer-Aufgabe: Repo importieren,
      Env-Variablen DATABASE_URL, VITE_CLERK_PUBLISHABLE_KEY,
      GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI setzen)
-  5. Passwort-Manager: echtes Master-Passwort setzen (Nutzer)
+  3. Passwort-Manager: echtes Master-Passwort setzen (Nutzer)
 
 0b. SESSION VOM 07.08.2026 – PHASE 3 FERTIGGESTELLT
 ---------------------------------------------------------------------

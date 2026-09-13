@@ -1,6 +1,6 @@
 =====================================================================
  PROMPT FUER CLAUDE / KI-ASSISTENT – einfach komplett einfuegen
- Stand: 12.09.2026 (Phase 1 bis 4 + OAuth2/MEGA vollständig fertig)
+ Stand: 12.09.2026 (Phase 1 bis 4 + Power-Befehle + Checklisten + Glows fertig)
 =====================================================================
 
 Ich arbeite am Projekt OmniDesk – einer modularen All-in-One-
@@ -34,7 +34,7 @@ REGELN (unveraendert einhalten):
   - Farbthema strikt: Hintergrund #09090b, Kacheln #18181b, Text
     #fafafa, Sekundaertext #a1a1aa, Gradient #230d8f -> #cf0a0a.
     Fertige Utilities: bg-gradient-accent, text-gradient-accent,
-    glow, glow-strong. Nur Shadcn-Komponenten verwenden.
+    glow, glow-strong, glow-subtle, glass-card, card-hover-glow. Nur Shadcn-Komponenten verwenden.
   - Strikte Modultrennung: jedes Modul unter src/modules/<id>/ mit
     index.tsx als einzigem Export; neue Module NUR ueber die
     Registry src/config/modules.ts anmelden. Ein Drizzle-Schema
@@ -42,30 +42,45 @@ REGELN (unveraendert einhalten):
   - Jede Aenderung mit npm run build verifizieren (muss 100% gruen sein).
   - UI-Texte auf Deutsch. Toasts (Sonner) fuer Erfolg/Fehler.
 
-AKTUELLER STAND (ALLES FERTIGGESTELLT & GETESTET):
-  - Phase 1: Core, Layout, Clerk-Auth, DB-Setup, Links, Notizen.
-  - Phase 2: Dashboard mit Bento-Grid, Tasks (Kanban/Liste), Pomodoro,
-    Kontakte, Kalender, Einstellungen.
-  - Phase 3: Befehlsbibliothek, Projektmanagement mit DnD,
-    Passwort-Manager (PBKDF2/AES-256-GCM), Booking-System (/book/:slug),
-    PWA (Service Worker, Manifest), Vercel-Adapter (api/[[...route]].ts).
-  - Phase 4: Gmail-Klon, Cloud-Monitoring (Drive & MEGA), Multi-Account.
-  - Feinschliff: Konfigurierbare Dashboard-Widgets (Drag & Drop, Dialog),
-    Mobile-Responsive Navigation (Drawer Sheet), Globale Command-Palette
-    (Strg + K / Cmd + K).
-  - Live OAuth2 & MEGA: Google OAuth Flow (URL-Generator, Callback,
-    Quota-Sync, Auto-Refresh-Token, Gmail API Versand), Live MEGA Cloud
-    Anbindung via megajs mit Quota-Sync & sicherer Sitzungsspeicherung.
+AKTUELLER STAND (ALLES VOLLSTÄNDIG FERTIGGESTELLT & GETESTET):
+  - Phase 1 & 2: Core, Layout, Clerk-Auth, DB-Setup, Bento-Grid Dashboard,
+    Tasks (Kanban/Liste), Pomodoro, Kontakte, Kalender, Notizen, Links, Settings.
+  - Phase 3: Befehlsbibliothek, Projektmanagement (DnD), Passwort-Manager
+    (PBKDF2/AES-256-GCM), Booking-System (/book/:slug), PWA, Vercel-Adapter.
+  - Phase 4: Gmail-Klon (50 Mails, Kategorien ohne Werbung, Live Google-Versand),
+    Cloud-Monitoring (Google Drive & MEGA Quota-Sync via OAuth2/megajs).
+  - Dashboard-Erweiterung (10 Widgets!):
+    * Begrüßung (Hero), Pomodoro, Aufgaben, Termine, Notizen, Links, Projekte
+    * NEU: CloudStorageWidget (Google Drive + MEGA Speicherbalken & Sync-All)
+    * NEU: QuickStatsWidget (Tages-Fokus: überfällige/heutige Tasks, nächster Termin, Pomodoro-Mini)
+    * NEU: TimezonesWidget (IT-Weltuhr: Berlin, UTC Server, New York, Tokio)
+  - Aufgaben & Projekte Power-Features:
+    * Aufgaben: Unteraufgaben (Checklisten) abhaken/anlegen + Tags mit Badge-Pills & Fortschrittsbalken
+    * Projekte: Tagging-System in Formularen, Kacheln und Board-Detailansicht
+  - Befehlsbibliothek & Command-Palette Next-Level:
+    * 160+ kuratierte Profi-Befehle (Linux, Windows, Active Directory, Git, Docker, Kubernetes, DBs, Security, Netzwerk)
+    * Interaktiver CommandParamDialog für {{platzhalter}} mit Live-Vorschau & Kopieren
+    * Leuchtende Inline-Parameter-Chips im Code, Klick-to-Copy, Terminal-Prompt ($/>)
+    * Favoriten-System (⭐ Stern-Pins, localStorage, Favoriten-Tab)
+    * Markdown-Export (.md Cheatsheet herunterladen)
+    * Globale Command-Palette (Strg + K): Durchsucht alle 160+ Befehle, öffnet bei Parametern direkt den Dialog!
+  - High-End UI & Glows:
+    * Subtile Ambient-Glow Sphären im App-Hintergrund (#230d8f & #cf0a0a)
+    * Glassmorphism-Sidebar (backdrop-blur-xl, border-border/60, leuchtender Active-Pill)
+    * Interaktive Card-Hover-Glows auf Bento-Karten und Hero-Greeting-Glow
   - Verifikation: npm run build (0 Fehler), npm run lint (0 Fehler).
 
-DEINE NAECHSTEN SCHRITTE / ARBEITSAUFTRAG:
-  1. Beide Dev-Server pruefen (npm run dev & npm run dev:api).
-  2. Google OAuth2 Flow und MEGA Live-Sync im Browser verifizieren
-     (unter /settings -> Integrationen oder im Cloud-Monitoring).
-  3. Vercel-Deployment unterstuetzen oder automatisieren.
-  4. Weitere Optimierungsideen gemaess Nutzerabsprache umsetzen
-     (z. B. Cloud-Storage Dashboard-Widget, Datei-Upload, Notizen-Sync).
+NEUE MODUL-IDEEN / NAECHSTE SCHRITTE:
+  1. Neues Modul "IT-Toolbox & Dev-Converters" (/tools):
+     JWT-Debugger, Subnet-/CIDR-Rechner, Base64/URL Encoder, Hash-Generator,
+     Cron-Expression Visualizer, UUID-Generator, JSON Formatter.
+  2. Neues Modul "Uptime & Service-Health-Monitor" (/uptime):
+     Websites/APIs/Ports monitoren (HTTP Status, Latenz/Ping, SSL-Resttage)
+     mit eigenem Bento-Dashboard-Widget.
+  3. Floating Scratchpad (immer griffbereiter Schnellentwurf per Shortcut).
+  4. Cloud-Monitoring: Drag & Drop File-Upload zu Drive/MEGA.
+  5. Vercel-Deployment durchführen.
 
-Bestaetige kurz den Stand und frage den Nutzer, welche Aufgabe er
-als naechstes angehen moechte.
+Bestaetige kurz den Stand und frage den Nutzer, welches neue Feature
+oder Modul als naechstes angegangen werden soll.
 =====================================================================

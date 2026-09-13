@@ -14,6 +14,7 @@ import { googleCallbackRoute } from './routes/google-callback.ts'
 import { integrationsRoute } from './routes/integrations.ts'
 import { mailRoute } from './routes/mail.ts'
 import { cloudMonitorRoute } from './routes/cloud-monitor.ts'
+import { uptimeRoute } from './routes/uptime.ts'
 
 /**
  * Gemeinsame App-Factory für beide Laufzeiten:
@@ -41,6 +42,7 @@ export function createApp() {
   app.route('/integrations', integrationsRoute)
   app.route('/mail', mailRoute)
   app.route('/cloud-monitor', cloudMonitorRoute)
+  app.route('/uptime', uptimeRoute)
 
   return app
 }

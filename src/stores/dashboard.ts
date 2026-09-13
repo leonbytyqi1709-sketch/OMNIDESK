@@ -22,6 +22,7 @@ export const DEFAULT_WIDGET_ORDER: string[] = [
   'greeting',
   'quick-stats',
   'cloud-storage',
+  'uptime',
   'pomodoro',
   'tasks',
   'appointments',

@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import {
+  Activity,
   CalendarDays,
   Cloud,
   Globe,
@@ -22,6 +23,7 @@ import { ProjectsWidget } from './components/ProjectsWidget'
 import { QuickStatsWidget } from './components/QuickStatsWidget'
 import { TasksWidget } from './components/TasksWidget'
 import { TimezonesWidget } from './components/TimezonesWidget'
+import { UptimeWidget } from './components/UptimeWidget'
 
 export interface DashboardWidgetMeta {
   id: string
@@ -113,5 +115,13 @@ export const DASHBOARD_WIDGETS: DashboardWidgetMeta[] = [
     icon: SquareKanban,
     component: ProjectsWidget,
     moduleId: 'projects',
+  },
+  {
+    id: 'uptime',
+    title: 'Service-Health & Uptime',
+    description: 'Live-Status und Latenz überwachter Dienste & Webseiten',
+    icon: Activity,
+    component: UptimeWidget,
+    moduleId: 'uptime',
   },
 ]

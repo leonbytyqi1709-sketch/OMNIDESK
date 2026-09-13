@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTheme } from 'next-themes'
 import {
+  Activity,
   CalendarDays,
   Cloud,
   Contact,
@@ -152,6 +153,20 @@ export function CommandPalette() {
 
         {/* 2. Schnellaktionen */}
         <CommandGroup heading="Schnellaktionen">
+          <CommandItem
+            value="Aktion: Uptime Monitor Dienst Server prüfen Status Health"
+            onSelect={() =>
+              runCommand(() => {
+                navigate('/uptime')
+                toast.info('Uptime-Monitor geöffnet')
+              })
+            }
+          >
+            <Activity className="size-4 text-emerald-400" />
+            <span>Uptime & Service-Health öffnen</span>
+            <CommandShortcut>/uptime</CommandShortcut>
+          </CommandItem>
+
           <CommandItem
             value="Aktion: E-Mail verfassen schreiben Gmail Mail"
             onSelect={() =>
