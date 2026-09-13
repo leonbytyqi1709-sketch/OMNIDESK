@@ -1,6 +1,7 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import {
   Activity,
+  Bot,
   CalendarDays,
   Cloud,
   Contact,
@@ -98,6 +99,15 @@ export const moduleRegistry: ModuleDefinition[] = [
     path: '/pomodoro',
     icon: Timer,
     component: lazy(() => import('@/modules/pomodoro')),
+    toggleable: true,
+    category: 'productivity',
+  },
+  {
+    id: 'assistant',
+    title: 'KI-Assistent',
+    path: '/assistant',
+    icon: Bot,
+    component: lazy(() => import('@/modules/assistant')),
     toggleable: true,
     category: 'productivity',
   },

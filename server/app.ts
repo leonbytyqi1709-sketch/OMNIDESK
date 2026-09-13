@@ -15,6 +15,7 @@ import { integrationsRoute } from './routes/integrations.ts'
 import { mailRoute } from './routes/mail.ts'
 import { cloudMonitorRoute } from './routes/cloud-monitor.ts'
 import { uptimeRoute } from './routes/uptime.ts'
+import { chatRoute } from './routes/chat.ts'
 
 /**
  * Gemeinsame App-Factory für beide Laufzeiten:
@@ -43,6 +44,7 @@ export function createApp() {
   app.route('/mail', mailRoute)
   app.route('/cloud-monitor', cloudMonitorRoute)
   app.route('/uptime', uptimeRoute)
+  app.route('/chat', chatRoute)
 
   return app
 }

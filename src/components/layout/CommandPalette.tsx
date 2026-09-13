@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { useTheme } from 'next-themes'
 import {
   Activity,
+  Bot,
   CalendarDays,
   Cloud,
   Contact,
@@ -153,6 +154,20 @@ export function CommandPalette() {
 
         {/* 2. Schnellaktionen */}
         <CommandGroup heading="Schnellaktionen">
+          <CommandItem
+            value="Aktion: KI Assistent Chat Frage stellen Bot GPT AI"
+            onSelect={() =>
+              runCommand(() => {
+                navigate('/assistant')
+                toast.info('KI-Assistent geöffnet')
+              })
+            }
+          >
+            <Bot className="size-4 text-purple-400" />
+            <span>KI-Assistent öffnen</span>
+            <CommandShortcut>/assistant</CommandShortcut>
+          </CommandItem>
+
           <CommandItem
             value="Aktion: Uptime Monitor Dienst Server prüfen Status Health"
             onSelect={() =>
