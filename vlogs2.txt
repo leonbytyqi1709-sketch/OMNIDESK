@@ -1,0 +1,2 @@
+Vercel CLI 59.20.0 (Node.js 24.21.0)
+Resolving deployment "omnidesk-ruby.vercel.app"
