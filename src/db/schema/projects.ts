@@ -7,7 +7,7 @@ import {
   timestamp,
   uuid,
 } from 'drizzle-orm/pg-core'
-import type { TaskPriority } from './tasks.ts'
+import type { TaskPriority } from './tasks'
 
 export const PROJECT_STATUSES = ['active', 'paused', 'done'] as const
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number]

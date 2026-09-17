@@ -1,7 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { db } from '../../src/db/client.ts'
-import { connectedAccounts } from '../../src/db/schema/index.ts'
+import { db } from '../../src/db/client'
+import { connectedAccounts } from '../../src/db/schema/index'
 
 export const cloudMonitorRoute = new Hono()
 

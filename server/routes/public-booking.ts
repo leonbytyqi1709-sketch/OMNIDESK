@@ -1,13 +1,13 @@
 import { and, eq, gte, lt } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
+import { db } from '../../src/db/client'
 import {
   appointments,
   bookingSettings,
   type WeekAvailability,
-} from '../../src/db/schema/index.ts'
-import { nextDate, weekdayOfDate, zonedDateTime } from '../timezone.ts'
+} from '../../src/db/schema/index'
+import { nextDate, weekdayOfDate, zonedDateTime } from '../timezone'
 
 const WEEKDAY_KEYS: (keyof WeekAvailability)[] = [
   'sun',

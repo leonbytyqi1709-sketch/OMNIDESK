@@ -1,8 +1,8 @@
 import net from 'node:net'
 import tls from 'node:tls'
 import { and, eq } from 'drizzle-orm'
-import { db } from '../src/db/client.ts'
-import { uptimeChecks, uptimeMonitors, type UptimeMonitor } from '../src/db/schema/index.ts'
+import { db } from '../src/db/client'
+import { uptimeChecks, uptimeMonitors, type UptimeMonitor } from '../src/db/schema/index'
 
 /**
  * Ermittelt verbleibende SSL-Gültigkeitstage für einen HTTPS-Host via TLS-Handshake.

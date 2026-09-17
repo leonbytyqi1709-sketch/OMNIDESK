@@ -1,21 +1,21 @@
 import { Hono } from 'hono'
-import { requireAuth } from './auth.ts'
-import { linksRoute } from './routes/links.ts'
-import { notesRoute } from './routes/notes.ts'
-import { tasksRoute } from './routes/tasks.ts'
-import { contactsRoute } from './routes/contacts.ts'
-import { appointmentsRoute } from './routes/appointments.ts'
-import { commandsRoute } from './routes/commands.ts'
-import { projectsRoute } from './routes/projects.ts'
-import { vaultRoute } from './routes/vault.ts'
-import { bookingRoute } from './routes/booking.ts'
-import { publicBookingRoute } from './routes/public-booking.ts'
-import { googleCallbackRoute } from './routes/google-callback.ts'
-import { integrationsRoute } from './routes/integrations.ts'
-import { mailRoute } from './routes/mail.ts'
-import { cloudMonitorRoute } from './routes/cloud-monitor.ts'
-import { uptimeRoute } from './routes/uptime.ts'
-import { chatRoute } from './routes/chat.ts'
+import { requireAuth } from './auth'
+import { linksRoute } from './routes/links'
+import { notesRoute } from './routes/notes'
+import { tasksRoute } from './routes/tasks'
+import { contactsRoute } from './routes/contacts'
+import { appointmentsRoute } from './routes/appointments'
+import { commandsRoute } from './routes/commands'
+import { projectsRoute } from './routes/projects'
+import { vaultRoute } from './routes/vault'
+import { bookingRoute } from './routes/booking'
+import { publicBookingRoute } from './routes/public-booking'
+import { googleCallbackRoute } from './routes/google-callback'
+import { integrationsRoute } from './routes/integrations'
+import { mailRoute } from './routes/mail'
+import { cloudMonitorRoute } from './routes/cloud-monitor'
+import { uptimeRoute } from './routes/uptime'
+import { chatRoute } from './routes/chat'
 
 /**
  * Gemeinsame App-Factory für beide Laufzeiten:
@@ -60,7 +60,7 @@ export function createApp() {
       return c.json({ error: 'Ungültiges Cron-Secret' }, 401)
     }
     try {
-      const { refreshAllMonitors } = await import('./uptime-check.ts')
+      const { refreshAllMonitors } = await import('./uptime-check')
       await refreshAllMonitors()
       return c.json({ ok: true })
     } catch (err) {

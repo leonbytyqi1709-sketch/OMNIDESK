@@ -1,8 +1,8 @@
 import { and, asc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
-import { commands } from '../../src/db/schema/index.ts'
+import { db } from '../../src/db/client'
+import { commands } from '../../src/db/schema/index'
 
 const commandInput = z.object({
   title: z.string().trim().min(1, 'Beschreibung fehlt').max(300),

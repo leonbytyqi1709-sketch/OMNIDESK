@@ -1,5 +1,5 @@
 import { handle } from 'hono/vercel'
-import { createApp } from '../server/app.ts'
+import { createApp } from '../server/app'
 
 /**
  * Vercel-Function für ALLE /api/*-Routen (Catch-All).

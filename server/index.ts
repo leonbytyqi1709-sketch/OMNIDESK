@@ -20,7 +20,7 @@ process.on('uncaughtException', (err) => {
 
 const [{ serve }, { createApp }] = await Promise.all([
   import('@hono/node-server'),
-  import('./app.ts'),
+  import('./app'),
 ])
 
 const app = createApp()
@@ -34,7 +34,7 @@ serve({ fetch: app.fetch, port }, () => {
 const UPTIME_INTERVAL_MS = 5 * 60 * 1000
 const uptimeTicker = setInterval(async () => {
   try {
-    const { refreshAllMonitors } = await import('./uptime-check.ts')
+    const { refreshAllMonitors } = await import('./uptime-check')
     await refreshAllMonitors()
   } catch (err) {
     console.error('Automatischer Uptime-Check fehlgeschlagen:', err)

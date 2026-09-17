@@ -1,8 +1,8 @@
 import { and, asc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
-import { contacts } from '../../src/db/schema/index.ts'
+import { db } from '../../src/db/client'
+import { contacts } from '../../src/db/schema/index'
 
 const contactInput = z.object({
   firstName: z.string().trim().min(1, 'Vorname fehlt').max(100),

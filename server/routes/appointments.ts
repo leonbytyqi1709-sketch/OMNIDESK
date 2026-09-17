@@ -1,8 +1,8 @@
 import { and, asc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
-import { TASK_PRIORITIES, appointments } from '../../src/db/schema/index.ts'
+import { db } from '../../src/db/client'
+import { TASK_PRIORITIES, appointments } from '../../src/db/schema/index'
 
 const appointmentInput = z
   .object({

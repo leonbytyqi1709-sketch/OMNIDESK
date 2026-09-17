@@ -1,10 +1,10 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
-import { connectedAccounts } from '../../src/db/schema/index.ts'
-import { getGoogleOAuthUrl, getValidGoogleAccessToken } from '../google-auth.ts'
-import { connectMegaAccount, syncMegaAccount } from '../mega-auth.ts'
+import { db } from '../../src/db/client'
+import { connectedAccounts } from '../../src/db/schema/index'
+import { getGoogleOAuthUrl, getValidGoogleAccessToken } from '../google-auth'
+import { connectMegaAccount, syncMegaAccount } from '../mega-auth'
 
 const createAccountInput = z.object({
   provider: z.enum(['google', 'mega']),

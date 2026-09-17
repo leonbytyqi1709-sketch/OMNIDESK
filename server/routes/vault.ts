@@ -1,8 +1,8 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
-import { VAULT_CATEGORIES, vaultEntries, vaults } from '../../src/db/schema/index.ts'
+import { db } from '../../src/db/client'
+import { VAULT_CATEGORIES, vaultEntries, vaults } from '../../src/db/schema/index'
 
 /**
  * Der Server kennt weder Master-Passwort noch Klartext – er verwaltet nur

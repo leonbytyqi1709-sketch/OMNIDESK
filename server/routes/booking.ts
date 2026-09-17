@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
-import { bookingSettings } from '../../src/db/schema/index.ts'
+import { db } from '../../src/db/client'
+import { bookingSettings } from '../../src/db/schema/index'
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/
 

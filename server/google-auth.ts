@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
-import { db } from '../src/db/client.ts'
-import { connectedAccounts, type ConnectedAccount } from '../src/db/schema/index.ts'
+import { db } from '../src/db/client'
+import { connectedAccounts, type ConnectedAccount } from '../src/db/schema/index'
 
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',

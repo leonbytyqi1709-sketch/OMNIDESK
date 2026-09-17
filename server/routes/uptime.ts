@@ -1,13 +1,13 @@
 import { and, desc, eq, gte } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
+import { db } from '../../src/db/client'
 import {
   MONITOR_TYPES,
   uptimeChecks,
   uptimeMonitors,
-} from '../../src/db/schema/index.ts'
-import { checkSingleMonitor, refreshAllMonitors } from '../uptime-check.ts'
+} from '../../src/db/schema/index'
+import { checkSingleMonitor, refreshAllMonitors } from '../uptime-check'
 
 const monitorInput = z.object({
   name: z.string().trim().min(1, 'Name ist erforderlich').max(100),

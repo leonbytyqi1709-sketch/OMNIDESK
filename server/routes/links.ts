@@ -1,8 +1,8 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
-import { links } from '../../src/db/schema/index.ts'
+import { db } from '../../src/db/client'
+import { links } from '../../src/db/schema/index'
 
 const linkInput = z.object({
   title: z.string().trim().min(1, 'Titel fehlt').max(200),

@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import { drizzle, type NeonHttpDatabase } from 'drizzle-orm/neon-http'
-import * as schema from './schema/index.ts'
+import * as schema from './schema/index'
 
 /**
  * NUR SERVERSEITIG verwenden (API-Funktionen)!

@@ -1,8 +1,8 @@
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { db } from '../../src/db/client.ts'
-import { connectedAccounts } from '../../src/db/schema/index.ts'
-import { exchangeGoogleCode } from '../google-auth.ts'
+import { db } from '../../src/db/client'
+import { connectedAccounts } from '../../src/db/schema/index'
+import { exchangeGoogleCode } from '../google-auth'
 
 export const googleCallbackRoute = new Hono()
 

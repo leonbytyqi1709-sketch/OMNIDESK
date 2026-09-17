@@ -1,5 +1,5 @@
 import { index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
-import type { TaskPriority } from './tasks.ts'
+import type { TaskPriority } from './tasks'
 
 /** Kalender & Booking: Termine mit Uhrzeiten und Prioritätsfarben (Spec, Abschnitt 4). */
 export const appointments = pgTable(

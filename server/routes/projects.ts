@@ -1,7 +1,7 @@
 import { and, asc, desc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
+import { db } from '../../src/db/client'
 import {
   PROJECT_STATUSES,
   PROJECT_TASK_STATUSES,
@@ -9,7 +9,7 @@ import {
   milestones,
   projectTasks,
   projects,
-} from '../../src/db/schema/index.ts'
+} from '../../src/db/schema/index'
 
 const projectInput = z.object({
   name: z.string().trim().min(1, 'Name fehlt').max(300),

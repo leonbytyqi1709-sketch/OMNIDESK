@@ -1,9 +1,9 @@
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
-import { connectedAccounts } from '../../src/db/schema/index.ts'
-import { getValidGoogleAccessToken } from '../google-auth.ts'
+import { db } from '../../src/db/client'
+import { connectedAccounts } from '../../src/db/schema/index'
+import { getValidGoogleAccessToken } from '../google-auth'
 
 export const mailRoute = new Hono()
 

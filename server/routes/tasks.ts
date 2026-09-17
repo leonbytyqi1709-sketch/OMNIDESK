@@ -1,8 +1,8 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { db } from '../../src/db/client.ts'
-import { TASK_PRIORITIES, TASK_STATUSES, tasks } from '../../src/db/schema/index.ts'
+import { db } from '../../src/db/client'
+import { TASK_PRIORITIES, TASK_STATUSES, tasks } from '../../src/db/schema/index'
 
 const subtaskInput = z.object({
   id: z.string().trim().min(1),
