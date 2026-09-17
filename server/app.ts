@@ -41,6 +41,28 @@ export function createApp() {
   app.route('/public/booking', publicBookingRoute)
   app.route('/integrations/google', googleCallbackRoute)
 
+  // Vercel-Cron-Endpunkt: Uptime-Auto-Check alle 5 Minuten (vercel.json).
+  // Ersetzt den 5-Minuten-Ticker aus server/index.ts, der im Serverless-
+  // Betrieb nicht laufen kann. Geschützt über CRON_SECRET (Vercel sendet
+  // automatisch `Authorization: Bearer $CRON_SECRET`).
+  app.get('/cron/uptime-refresh', async (c) => {
+    const secret = process.env.CRON_SECRET
+    if (!secret) {
+      return c.json({ error: 'CRON_SECRET ist nicht konfiguriert' }, 403)
+    }
+    if (c.req.header('Authorization') !== `Bearer ${secret}`) {
+      return c.json({ error: 'Ungültiges Cron-Secret' }, 401)
+    }
+    try {
+      const { refreshAllMonitors } = await import('./uptime-check.ts')
+      await refreshAllMonitors()
+      return c.json({ ok: true })
+    } catch (err) {
+      console.error('[Cron] Uptime-Refresh fehlgeschlagen:', err)
+      return c.json({ error: 'Uptime-Refresh fehlgeschlagen' }, 500)
+    }
+  })
+
   app.use('*', requireAuth)
   app.route('/links', linksRoute)
   app.route('/notes', notesRoute)
