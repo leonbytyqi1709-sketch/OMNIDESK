@@ -104,7 +104,7 @@ export const moduleRegistry: ModuleDefinition[] = [
   },
   {
     id: 'assistant',
-    title: 'KI-Assistent',
+    title: 'Omni',
     path: '/assistant',
     icon: Bot,
     component: lazy(() => import('@/modules/assistant')),

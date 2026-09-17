@@ -1,7 +1,9 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Outlet } from 'react-router'
 import { useSettingsStore } from '@/stores/settings'
+import { useOverdueTaskNotifications } from '@/modules/tasks/api'
 import { CommandPalette } from './CommandPalette'
+import { FloatingScratchpad } from './FloatingScratchpad'
 import { MobileHeader } from './MobileHeader'
 import { ModuleLoader } from './ModuleLoader'
 import { Sidebar } from './Sidebar'
@@ -9,6 +11,9 @@ import { Sidebar } from './Sidebar'
 const SIDEBAR_STORAGE_KEY = 'omnidesk:sidebar-collapsed'
 
 export function AppLayout() {
+  // Überfällige Aufgaben: Browser-Notification max. 1x pro Tag (in allen Modulen aktiv)
+  useOverdueTaskNotifications()
+
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1',
   )
@@ -47,6 +52,9 @@ export function AppLayout() {
 
       {/* Globale Command-Palette (Strg + K / Cmd + K) */}
       <CommandPalette />
+
+      {/* Floating Scratchpad (Strg + Shift + S) */}
+      <FloatingScratchpad />
     </div>
   )
 }

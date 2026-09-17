@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Lokale Build-/Laufzeit-Logs (temporäre Verifikationsdateien)
+*_log.txt
+verify_*.txt
+lint_check.txt

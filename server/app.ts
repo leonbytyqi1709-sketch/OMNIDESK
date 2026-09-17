@@ -26,6 +26,17 @@ import { chatRoute } from './routes/chat.ts'
 export function createApp() {
   const app = new Hono().basePath('/api')
 
+  // Zentraler Fehlerfänger: Wirft eine Route einen Fehler (z. B. DB-Ausfall),
+  // antwortet die API sauber mit 500 statt den Fehler an Node durchreichen
+  // zu lassen (früher ein häufiger Crash-/Absturzgrund).
+  app.onError((err, c) => {
+    console.error(`[API] Fehler in ${c.req.method} ${c.req.path}:`, err)
+    return c.json({ error: 'Interner Serverfehler' }, 500)
+  })
+
+  // Health-Check (öffentlich, ohne Auth) – zum Überwachen der API
+  app.get('/health', (c) => c.json({ ok: true, ts: Date.now() }))
+
   // Öffentliche Routen VOR der Auth-Middleware registrieren
   app.route('/public/booking', publicBookingRoute)
   app.route('/integrations/google', googleCallbackRoute)

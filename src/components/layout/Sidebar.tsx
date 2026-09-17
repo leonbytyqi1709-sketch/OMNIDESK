@@ -182,7 +182,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           >
             <div
               className={cn(
-                'flex flex-1 items-center gap-2 rounded-md px-2 py-1.5',
+                'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5',
                 collapsed && 'flex-none px-0',
               )}
             >
@@ -193,13 +193,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 }}
               />
               {!collapsed && (
-                <span className="truncate text-sm text-muted-foreground">
+                <span className="min-w-0 truncate text-sm text-muted-foreground">
                   {displayName}
                 </span>
               )}
             </div>
             {collapsed && <Separator className="my-1" />}
-            <SidebarLink module={settingsModule} collapsed={collapsed} />
+            <div className="shrink-0">
+              <SidebarLink module={settingsModule} collapsed={collapsed} />
+            </div>
           </div>
         </div>
       </aside>

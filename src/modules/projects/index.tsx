@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ArrowLeft,
   MoreVertical,
@@ -34,6 +34,7 @@ import {
   type ProjectDto,
 } from './api'
 import { PRIORITY_META, PROJECT_STATUS_META } from './constants'
+import { consumeQuickAction } from '@/lib/quick-action'
 
 function ProjectDetailView({
   projectId,
@@ -122,6 +123,14 @@ export default function ProjectsPage() {
     setEditProject(null)
     setDialogOpen(true)
   }
+
+  // Schnellaktion aus der Command-Palette: Dialog direkt öffnen
+  useEffect(() => {
+    if (consumeQuickAction('create-project')) {
+      setEditProject(null)
+      setDialogOpen(true)
+    }
+  }, [])
 
   const openEdit = (project: ProjectDto) => {
     setEditProject(project)

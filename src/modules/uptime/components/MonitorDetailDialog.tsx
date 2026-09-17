@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Table,
   TableBody,
@@ -45,7 +44,7 @@ export function MonitorDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <DialogTitle>Prüfverlauf: {monitor?.name}</DialogTitle>
@@ -68,8 +67,8 @@ export function MonitorDetailDialog({
             Noch keine Prüfungen für diesen Monitor vorhanden.
           </div>
         ) : (
-          <ScrollArea className="max-h-[380px] rounded-md border border-zinc-800">
-            <Table>
+          <div className="max-h-[380px] overflow-auto rounded-md border border-zinc-800">
+            <Table className="min-w-[640px]">
               <TableHeader className="bg-zinc-900/80 sticky top-0">
                 <TableRow className="border-zinc-800 hover:bg-transparent">
                   <TableHead className="w-[150px]">Zeitpunkt</TableHead>
@@ -159,7 +158,7 @@ export function MonitorDetailDialog({
                 ))}
               </TableBody>
             </Table>
-          </ScrollArea>
+          </div>
         )}
       </DialogContent>
     </Dialog>

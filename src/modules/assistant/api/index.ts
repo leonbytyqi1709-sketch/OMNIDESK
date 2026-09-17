@@ -16,6 +16,26 @@ export interface ChatMessageDto {
   content: string
   createdAt: string
 }
+export interface ChatUsageRatelimit {
+  remainingRequests: number | null
+  remainingTokens: number | null
+  resetRequests: string | null
+  resetTokens: string | null
+}
+
+export interface ChatUsage {
+  promptTokens: number | null
+  completionTokens: number | null
+  totalTokens: number | null
+  ratelimit: ChatUsageRatelimit | null
+}
+
+export interface SendMessageResult {
+  userMessage: ChatMessageDto
+  assistantMessage: ChatMessageDto
+  usage?: ChatUsage | null
+}
+
 
 const CHAT_SESSIONS_KEY = ['chat-sessions'] as const
 
@@ -83,20 +103,25 @@ export function useChatMessages(sessionId: string | null) {
   })
 }
 
-export function useSendMessage(sessionId: string) {
+export function useSendMessage() {
   const apiFetch = useApiFetch()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (content: string) =>
-      apiFetch<{ userMessage: ChatMessageDto; assistantMessage: ChatMessageDto }>(
+    // sessionId wird bei jedem Aufruf mitgegeben (nicht beim Hook-Setup!),
+    // damit die erste Nachricht eines frisch angelegten Chats nicht an eine
+    // veraltete/leere Session-URL geschickt wird (früherer "Zweimal-senden"-Bug).
+    mutationFn: ({ sessionId, content }: { sessionId: string; content: string }) =>
+      apiFetch<SendMessageResult>(
         `/api/chat/sessions/${sessionId}/messages`,
         {
           method: 'POST',
           body: JSON.stringify({ content }),
         },
       ),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat-messages', sessionId] })
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['chat-messages', variables.sessionId],
+      })
       queryClient.invalidateQueries({ queryKey: CHAT_SESSIONS_KEY })
     },
   })

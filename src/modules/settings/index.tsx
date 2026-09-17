@@ -1,10 +1,20 @@
+import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AppearanceTab } from './components/AppearanceTab'
 import { GeneralTab } from './components/GeneralTab'
 import { IntegrationsTab } from './components/IntegrationsTab'
 import { ModulesTab } from './components/ModulesTab'
 
+const TAB_KEY = 'omnidesk:settings-tab'
+const VALID_TABS = ['general', 'appearance', 'integrations', 'modules'] as const
+
 export default function SettingsPage() {
+  // Aktiven Tab dauerhaft merken, damit ein Reload nicht zu "Allgemein" zurückspringt
+  const [tab, setTab] = useState<string>(() => {
+    const saved = localStorage.getItem(TAB_KEY)
+    return saved && (VALID_TABS as readonly string[]).includes(saved) ? saved : 'general'
+  })
+
   return (
     <div className="mx-auto max-w-3xl p-8">
       <h1 className="text-2xl font-semibold tracking-tight">Einstellungen</h1>
@@ -12,7 +22,14 @@ export default function SettingsPage() {
         App-Konfiguration, Datensicherung und Modul-Verwaltung.
       </p>
 
-      <Tabs defaultValue="general" className="mt-6">
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          setTab(v)
+          localStorage.setItem(TAB_KEY, v)
+        }}
+        className="mt-6"
+      >
         <TabsList>
           <TabsTrigger value="general">Allgemein</TabsTrigger>
           <TabsTrigger value="appearance">Erscheinungsbild</TabsTrigger>

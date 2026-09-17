@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Bot,
+  ChevronDown,
   CornerDownLeft,
+  Gauge,
   Loader2,
   Menu,
   MessageSquare,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
   Sparkles,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -17,6 +23,7 @@ import {
   useCreateSession,
   useSendMessage,
 } from './api'
+import type { ChatUsage } from './api'
 import { ChatMessageItem } from './components/ChatMessageItem'
 import { ChatSidebar } from './components/ChatSidebar'
 
@@ -33,6 +40,20 @@ export default function AssistantPage() {
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem('omnidesk_assistant_sidebar') === 'collapsed',
+  )
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      localStorage.setItem(
+        'omnidesk_assistant_sidebar',
+        prev ? 'open' : 'collapsed',
+      )
+      return !prev
+    })
+  }
+
   const [input, setInput] = useState('')
 
   // Wenn Sessions geladen sind und keine aktiv ist, wähle die erste
@@ -44,17 +65,47 @@ export default function AssistantPage() {
 
   const { data: messages = [], isLoading: messagesLoading } =
     useChatMessages(activeSessionId)
-  const sendMutation = useSendMessage(activeSessionId ?? '')
+  const sendMutation = useSendMessage()
 
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const isPinnedRef = useRef(true)
+  const [isPinnedToBottom, setIsPinnedToBottom] = useState(true)
+  const [usage, setUsage] = useState<ChatUsage | null>(null)
+  const [isContextOpen, setIsContextOpen] = useState(true)
+
+  // Auto-Scroll nur, wenn der Nutzer selbst ganz unten ist – so kann man
+  // jederzeit nach oben scrollen, ohne dass der Chat "zurückzieht".
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    const viewport = scrollAreaRef.current?.querySelector(
+      '[data-radix-scroll-area-viewport]',
+    )
+    viewport?.scrollTo({ top: viewport.scrollHeight, behavior })
+  }
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (isPinnedRef.current) scrollToBottom()
   }, [messages, sendMutation.isPending])
+
+  const handleChatScroll = () => {
+    const viewport = scrollAreaRef.current?.querySelector(
+      '[data-radix-scroll-area-viewport]',
+    )
+    if (!viewport) return
+    const pinned =
+      viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 80
+    isPinnedRef.current = pinned
+    setIsPinnedToBottom(pinned)
+  }
+
+  const markPinned = () => {
+    isPinnedRef.current = true
+    setIsPinnedToBottom(true)
+  }
 
   const handleNewChat = async () => {
     try {
       const newSession = await createSessionMutation.mutateAsync()
+      markPinned()
       setActiveSessionId(newSession.id)
       setMobileSidebarOpen(false)
     } catch {
@@ -64,6 +115,20 @@ export default function AssistantPage() {
 
   const handleSend = async (customText?: string) => {
     const textToSend = customText || input
+
+    // /context – Token-Verbrauch & verfügbares Kontingent anzeigen
+    if (textToSend.trim() === '/context') {
+      if (!customText) setInput('')
+      if (usage) {
+        setIsContextOpen(true)
+        markPinned()
+        scrollToBottom()
+      } else {
+        toast.info('Noch keine Token-Nutzung – sende zuerst eine Nachricht.')
+      }
+      return
+    }
+
     if (!textToSend.trim() || sendMutation.isPending) return
 
     let currentId = activeSessionId
@@ -85,7 +150,13 @@ export default function AssistantPage() {
     }
 
     try {
-      await sendMutation.mutateAsync(textToSend.trim())
+      const result = await sendMutation.mutateAsync({
+        sessionId: currentId,
+        content: textToSend.trim(),
+      })
+      setUsage(result.usage ?? null)
+      setIsContextOpen(true)
+      markPinned()
     } catch {
       toast.error('Nachricht konnte nicht gesendet werden')
     }
@@ -103,13 +174,43 @@ export default function AssistantPage() {
   return (
     <div className="flex h-[calc(100vh-5.5rem)] overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/60 shadow-xl card-hover-glow">
       {/* Desktop Sidebar */}
-      <div className="hidden w-72 md:block">
-        <ChatSidebar
-          sessions={sessions}
-          currentSessionId={activeSessionId}
-          onSelectSession={(id) => setActiveSessionId(id)}
-          onNewChat={handleNewChat}
-        />
+      <div
+        className={`hidden shrink-0 transition-[width] duration-200 md:block ${
+          sidebarCollapsed ? 'w-12' : 'w-72'
+        }`}
+      >
+        {sidebarCollapsed ? (
+          <div className="flex h-full w-12 flex-col items-center gap-2 border-r border-zinc-800 bg-zinc-950/60 py-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
+              onClick={toggleSidebar}
+              title="Sidebar einblenden"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 bg-gradient-accent text-white shadow-sm glow-subtle hover:brightness-110"
+              onClick={handleNewChat}
+              title="Neuer Chat"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <ChatSidebar
+            sessions={sessions}
+            currentSessionId={activeSessionId}
+            onSelectSession={(id) => {
+              markPinned()
+              setActiveSessionId(id)
+            }}
+            onNewChat={handleNewChat}
+          />
+        )}
       </div>
 
       {/* Mobile Drawer */}
@@ -120,6 +221,7 @@ export default function AssistantPage() {
               sessions={sessions}
               currentSessionId={activeSessionId}
               onSelectSession={(id) => {
+                markPinned()
                 setActiveSessionId(id)
                 setMobileSidebarOpen(false)
               }}
@@ -142,6 +244,16 @@ export default function AssistantPage() {
             <Button
               variant="ghost"
               size="icon"
+              className="hidden md:inline-flex text-zinc-400 hover:text-zinc-100"
+              onClick={toggleSidebar}
+              title={sidebarCollapsed ? 'Sidebar einblenden' : 'Sidebar ausblenden'}
+            >
+              <PanelLeftClose className="h-5 w-5" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
               className="md:hidden text-zinc-400"
               onClick={() => setMobileSidebarOpen(true)}
             >
@@ -154,7 +266,7 @@ export default function AssistantPage() {
 
             <div className="truncate">
               <h2 className="text-sm font-semibold text-zinc-100 truncate">
-                {activeSession?.title || 'KI-Assistent'}
+                {activeSession?.title || 'Omni'}
               </h2>
               <p className="text-[11px] text-zinc-500">
                 IT- &amp; FiSi-Fachwissen, Skripte, Notizen &amp; Fehleranalyse
@@ -164,7 +276,12 @@ export default function AssistantPage() {
         </div>
 
         {/* Nachrichtenliste */}
-        <ScrollArea className="flex-1 px-4 py-4">
+        <div className="relative flex-1 overflow-hidden">
+          <ScrollArea
+            ref={scrollAreaRef}
+            onScroll={handleChatScroll}
+            className="h-full px-4 py-4"
+          >
           {sessionsLoading || messagesLoading ? (
             <div className="flex h-64 items-center justify-center text-xs text-zinc-500">
               <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
@@ -176,7 +293,7 @@ export default function AssistantPage() {
                 <Sparkles className="h-6 w-6" />
               </div>
               <h3 className="text-base font-semibold text-zinc-200">
-                Wie kann ich dich heute unterstützen?
+                Hi, ich bin Omni 👋 Wie kann ich dich heute unterstützen?
               </h3>
               <p className="mt-1 text-xs text-zinc-500 max-w-sm">
                 Frage nach Fachbegriffen, Skripten (PowerShell, Bash, SQL),
@@ -213,10 +330,82 @@ export default function AssistantPage() {
                   </span>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
           )}
         </ScrollArea>
+
+        {/* „Nach unten"-Button, sobald man nach oben gescrollt ist */}
+        {!isPinnedToBottom && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              markPinned()
+              scrollToBottom()
+            }}
+            className="absolute bottom-3 left-1/2 z-10 h-7 -translate-x-1/2 rounded-full border border-zinc-800 bg-zinc-900/90 text-[11px] text-zinc-300 shadow-md hover:bg-zinc-800"
+          >
+            <ChevronDown className="mr-1 h-3.5 w-3.5" />
+            Nach unten
+          </Button>
+        )}
+        </div>
+
+        {/* /context – Token-Nutzung & Kontingent */}
+        {usage && isContextOpen && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-zinc-800/80 bg-zinc-900/40 px-4 py-2 text-[11px] text-zinc-500">
+            <span className="flex items-center gap-1.5 text-zinc-400">
+              <Gauge className="h-3 w-3 text-primary" />
+              Token-Nutzung
+            </span>
+            <span>
+              Prompt:{' '}
+              <span className="text-zinc-300">
+                {usage.promptTokens?.toLocaleString('de-DE') ?? '–'}
+              </span>
+            </span>
+            <span>
+              Antwort:{' '}
+              <span className="text-zinc-300">
+                {usage.completionTokens?.toLocaleString('de-DE') ?? '–'}
+              </span>
+            </span>
+            <span>
+              Gesamt:{' '}
+              <span className="text-zinc-300">
+                {usage.totalTokens?.toLocaleString('de-DE') ?? '–'}
+              </span>{' '}
+              Tokens
+            </span>
+            {usage.ratelimit?.remainingTokens != null && (
+              <span>
+                Verfügbar:{' '}
+                <span className="text-emerald-400">
+                  {usage.ratelimit.remainingTokens.toLocaleString('de-DE')}
+                </span>{' '}
+                Tokens
+              </span>
+            )}
+            {usage.ratelimit?.remainingRequests != null && (
+              <span>
+                Anfragen übrig:{' '}
+                <span className="text-emerald-400">
+                  {usage.ratelimit.remainingRequests}
+                </span>
+              </span>
+            )}
+            {usage.ratelimit?.resetTokens && (
+              <span>Reset: {usage.ratelimit.resetTokens}</span>
+            )}
+            <button
+              onClick={() => setIsContextOpen(false)}
+              className="ml-auto text-zinc-600 transition-colors hover:text-zinc-300"
+              title="Ausblenden"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
 
         {/* Input Bar */}
         <div className="border-t border-zinc-800/80 p-3 bg-zinc-900/40">
@@ -225,7 +414,7 @@ export default function AssistantPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Frage stellen oder Prompt eingeben... (Enter zum Senden, Shift+Enter für Zeilenumbruch)"
+              placeholder="Frage stellen oder Prompt eingeben... (Enter senden, Shift+Enter Zeilenumbruch, /context für Token-Nutzung)"
               className="min-h-[44px] max-h-36 resize-none border-0 bg-transparent text-sm focus-visible:ring-0 placeholder:text-zinc-500"
               rows={1}
             />

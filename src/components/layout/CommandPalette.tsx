@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/command'
 import { moduleRegistry } from '@/config/modules'
 import { useCommands, type CommandDto } from '@/modules/commands/api'
+import { useNotes } from '@/modules/notes/api'
 import {
   CommandParamDialog,
   extractPlaceholders,
@@ -45,6 +46,23 @@ import { STARTER_COMMANDS } from '@/modules/commands/starter-library'
 import { useCommandPaletteStore } from '@/stores/command-palette'
 import { usePomodoroStore } from '@/stores/pomodoro'
 import { useSettingsStore } from '@/stores/settings'
+import { setQuickAction } from '@/lib/quick-action'
+
+/** Erzeugt einen Kontext-Snippet rund um den ersten Suchtreffer im Notizinhalt. */
+function buildNoteSnippet(content: string, query: string): string {
+  const trimmed = content.trim()
+  const idx = trimmed.toLowerCase().indexOf(query.toLowerCase())
+  if (idx === -1) {
+    return trimmed.slice(0, 80) + (trimmed.length > 80 ? '…' : '')
+  }
+  const start = Math.max(0, idx - 20)
+  const end = Math.min(trimmed.length, idx + query.length + 50)
+  const snippet = trimmed
+    .slice(start, end)
+    .replace(/\s+/g, ' ')
+    .trim()
+  return (start > 0 ? '…' : '') + snippet + (end < trimmed.length ? '…' : '')
+}
 
 function getCategoryIcon(cat: string) {
   if (cat.includes('Kubernetes') || cat.includes('Cloud-Native')) return '☸️'
@@ -70,8 +88,31 @@ export function CommandPalette() {
   const { start: startPomodoro, pause: pausePomodoro, reset: resetPomodoro, skip: skipPomodoro, running: pomodoroRunning } = usePomodoroStore()
 
   const { data: userCommands } = useCommands()
+  const { data: notes } = useNotes()
+  const [search, setSearch] = useState('')
   const [paramCmd, setParamCmd] = useState<CommandDto | null>(null)
   const [paramOpen, setParamOpen] = useState(false)
+
+  // Suchbegriff zurücksetzen, wenn die Palette geschlossen wird
+  useEffect(() => {
+    if (!isOpen) setSearch('')
+  }, [isOpen])
+
+  // Modulübergreifende Volltextsuche: Treffer in Notiz-Titel & -Inhalt
+  const noteHits = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!notes || query.length === 0) return []
+    return notes
+      .map((n) => {
+        const inTitle = n.title.toLowerCase().includes(query)
+        const inContent = n.content.toLowerCase().includes(query)
+        return { note: n, rank: inTitle ? 0 : inContent ? 1 : 2 }
+      })
+      .filter((h) => h.rank < 2)
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, 5)
+      .map((h) => h.note)
+  }, [notes, search])
 
   // Alle Befehle (Nutzer + Starter) zusammenführen
   const allCommands = useMemo<CommandDto[]>(() => {
@@ -131,7 +172,11 @@ export function CommandPalette() {
   return (
     <>
       <CommandDialog open={isOpen} onOpenChange={setOpen}>
-        <CommandInput placeholder="Befehl tippen oder Aktion suchen (z. B. 'Notiz', 'Port', 'Dark', 'Pomodoro')..." />
+        <CommandInput
+          value={search}
+          onValueChange={setSearch}
+          placeholder="Befehl tippen oder Aktion suchen (z. B. 'Notiz', 'Port', 'Dark', 'Pomodoro')..."
+        />
       <CommandList>
         <CommandEmpty>Keine passenden Befehle gefunden.</CommandEmpty>
 
@@ -155,16 +200,16 @@ export function CommandPalette() {
         {/* 2. Schnellaktionen */}
         <CommandGroup heading="Schnellaktionen">
           <CommandItem
-            value="Aktion: KI Assistent Chat Frage stellen Bot GPT AI"
+            value="Aktion: Omni KI Assistent Chat Frage stellen Bot GPT AI"
             onSelect={() =>
               runCommand(() => {
                 navigate('/assistant')
-                toast.info('KI-Assistent geöffnet')
+                toast.info('Omni geöffnet')
               })
             }
           >
             <Bot className="size-4 text-purple-400" />
-            <span>KI-Assistent öffnen</span>
+            <span>Omni öffnen</span>
             <CommandShortcut>/assistant</CommandShortcut>
           </CommandItem>
 
@@ -200,8 +245,8 @@ export function CommandPalette() {
             value="Aktion: Neue Notiz anlegen erstellen"
             onSelect={() =>
               runCommand(() => {
+                setQuickAction('create-note')
                 navigate('/notes')
-                toast.info('Notiz-Editor geöffnet')
               })
             }
           >
@@ -214,8 +259,8 @@ export function CommandPalette() {
             value="Aktion: Neue Aufgabe Task ToDo anlegen"
             onSelect={() =>
               runCommand(() => {
+                setQuickAction('create-task')
                 navigate('/tasks')
-                toast.info('Aufgabenverwaltung geöffnet')
               })
             }
           >
@@ -242,8 +287,8 @@ export function CommandPalette() {
             value="Aktion: Neues Projekt anlegen Infrastruktur"
             onSelect={() =>
               runCommand(() => {
+                setQuickAction('create-project')
                 navigate('/projects')
-                toast.info('Projektmanagement geöffnet')
               })
             }
           >
@@ -373,6 +418,34 @@ export function CommandPalette() {
         </CommandGroup>
 
         <CommandSeparator />
+
+        {/* Volltextsuche: Notiz-Treffer (Titel & Inhalt) */}
+        {noteHits.length > 0 && (
+          <>
+            <CommandGroup heading={`Notizen – Volltextsuche (${noteHits.length} Treffer)`}>
+              {noteHits.map((n) => (
+                <CommandItem
+                  key={n.id}
+                  value={`Notiz: ${n.title} ${n.content}`}
+                  onSelect={() => {
+                    setQuickAction('open-note', n.id)
+                    runCommand(() => navigate('/notes'))
+                  }}
+                >
+                  <NotebookPen className="size-4 shrink-0 text-emerald-400" />
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="truncate">{n.title || 'Unbenannte Notiz'}</span>
+                    <span className="truncate text-[11px] text-muted-foreground">
+                      {buildNoteSnippet(n.content, search.trim())}
+                    </span>
+                  </div>
+                  <CommandShortcut>Notiz öffnen</CommandShortcut>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+          </>
+        )}
 
         {/* 4. Terminal- & IT-Befehle (Direktkopie & Parameter-Dialog) */}
         <CommandGroup heading={`CLI-Befehle & Cheat-Sheet (${allCommands.length} Befehle)`}>

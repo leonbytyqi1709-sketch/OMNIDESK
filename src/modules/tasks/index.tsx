@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Columns3, List, ListTodo, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { consumeQuickAction } from '@/lib/quick-action'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TaskBoardView } from './components/TaskBoardView'
@@ -33,6 +34,14 @@ export default function TasksPage() {
     setEditTask(null)
     setDialogOpen(true)
   }
+
+  // Schnellaktion aus der Command-Palette: Dialog direkt öffnen
+  useEffect(() => {
+    if (consumeQuickAction('create-task')) {
+      setEditTask(null)
+      setDialogOpen(true)
+    }
+  }, [])
 
   const openEdit = (task: TaskDto) => {
     setEditTask(task)

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
+import { consumeQuickAction, consumeQuickActionPayload } from '@/lib/quick-action'
+import { deleteAllNoteAttachments } from './attachments'
 import { NoteEditor, type SaveStatus } from './components/NoteEditor'
 import { NoteList } from './components/NoteList'
 import {
@@ -23,6 +25,9 @@ export default function NotesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draft, setDraft] = useState<NoteInput | null>(null)
   const [dirty, setDirty] = useState(false)
+
+  // Anstoß aus der Command-Palette: Diese Notiz öffnen, sobald die Liste da ist
+  const pendingOpenRef = useRef<string | null>(null)
 
   // Merkt sich die aktuellen Werte für den Save-Flush beim Notizwechsel
   const flushRef = useRef<{ id: string; draft: NoteInput } | null>(null)
@@ -91,21 +96,40 @@ export default function NotesPage() {
     setSelectedId(id)
   }
 
-  const handleCreate = async () => {
+  const openCreate = () => {
     flushPending()
-    try {
-      const note = await createNote.mutateAsync()
-      setSelectedId(note.id)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Anlegen fehlgeschlagen')
-    }
+    void createNote.mutateAsync()
+      .then((note) => setSelectedId(note.id))
+      .catch((err) =>
+        toast.error(err instanceof Error ? err.message : 'Anlegen fehlgeschlagen'),
+      )
   }
+
+  // Schnellaktion aus der Command-Palette: sofort neue Notiz anlegen
+  useEffect(() => {
+    pendingOpenRef.current = consumeQuickActionPayload('open-note')
+    if (consumeQuickAction('create-note')) openCreate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Angestoßene "open-note"-Aktion ausführen, sobald die Notizliste geladen ist
+  useEffect(() => {
+    const wanted = pendingOpenRef.current
+    if (wanted && notes?.some((n) => n.id === wanted)) {
+      setSelectedId(wanted)
+      pendingOpenRef.current = null
+    }
+  }, [notes])
+
+  const handleCreate = openCreate
 
   const handleDelete = async () => {
     if (!selectedId) return
     const title = draft?.title || FALLBACK_TITLE
     try {
       await deleteNote.mutateAsync(selectedId)
+      // Anhänge der gelöschten Notiz aus IndexedDB aufräumen
+      void deleteAllNoteAttachments(selectedId)
       setDirty(false)
       const remaining = (notes ?? []).filter((n) => n.id !== selectedId)
       setSelectedId(remaining[0]?.id ?? null)
@@ -152,6 +176,7 @@ export default function NotesPage() {
       </aside>
       <section className="min-w-0 flex-1">
         <NoteEditor
+          noteId={selectedId}
           draft={draft}
           onChange={handleChange}
           status={status}

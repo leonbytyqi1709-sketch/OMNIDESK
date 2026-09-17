@@ -8,7 +8,14 @@ import { Toaster } from '@/components/ui/sonner'
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, staleTime: 30_000 },
+    queries: {
+      // Robust gegen kurze API-Aussetzer: 3 Versuche mit steigender Wartezeit
+      // statt sofortigem Fehler (sonst erscheint bei einem einzelnen
+      // fehlgeschlagenen Request sofort eine Fehlerseite).
+      retry: 3,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
+      staleTime: 30_000,
+    },
   },
 })
 

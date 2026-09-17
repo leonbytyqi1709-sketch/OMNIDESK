@@ -6,6 +6,30 @@ import { chatMessages, chatSessions } from '../../src/db/schema/index.ts'
 
 export const chatRoute = new Hono()
 
+/**
+ * API-Key-Failover:
+ * - `AI_API_KEYS` = kommagetrennte Liste von Fallback-Keys (Reihenfolge = Priorität)
+ * - `OPENAI_API_KEY` wird als erster Key interpretiert (Abwärtskompatibilität)
+ * Bei 401/403/429/5xx oder Netzwerkfehler wird der nächste Key probiert.
+ * Der zuletzt funktionierende Index wird prozessweit gemerkt (sticky).
+ */
+let preferredKeyIndex = 0
+
+function getApiKeys(): string[] {
+  const keys = [
+    process.env.OPENAI_API_KEY,
+    ...(process.env.AI_API_KEYS || '').split(','),
+  ]
+    .map((k) => k?.trim())
+    .filter((k): k is string => Boolean(k))
+  return [...new Set(keys)]
+}
+
+/** True, wenn ein Failover zum nächsten Key sinnvoll ist. */
+function isFailoverStatus(status: number): boolean {
+  return status === 401 || status === 403 || status === 408 || status === 429 || status >= 500
+}
+
 const createSessionSchema = z.object({
   title: z.string().trim().max(200).optional(),
 })
@@ -179,21 +203,34 @@ chatRoute.post('/sessions/:id/messages', async (c) => {
     .orderBy(asc(chatMessages.createdAt))
     .limit(20)
 
-  // 3. KI-Provider anrufen (OpenAI-kompatibel)
-  const apiKey = process.env.OPENAI_API_KEY
+  // 3. KI-Provider anrufen (OpenAI-kompatibel, mit API-Key-Failover)
   const baseUrl = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '')
   const model = process.env.AI_MODEL || 'gpt-4o-mini'
 
   let assistantContent = ''
+  let usage: {
+    promptTokens: number | null
+    completionTokens: number | null
+    totalTokens: number | null
+    ratelimit: {
+      remainingRequests: number | null
+      remainingTokens: number | null
+      resetRequests: string | null
+      resetTokens: string | null
+    } | null
+  } | null = null
 
-  if (!apiKey) {
-    assistantContent = `👋 **Hallo! Ich bin dein OmniDesk KI-Assistent.**
+  const apiKeys = getApiKeys()
+  if (apiKeys.length === 0) {
+    assistantContent = `👋 **Hallo! Ich bin Omni, dein KI-Assistent.**
 
-Aktuell ist noch kein \`OPENAI_API_KEY\` in der \`.env.local\` hinterlegt. 
+Aktuell ist noch kein \`OPENAI_API_KEY\` in der \`.env.local\` hinterlegt.
 
 Um mich live zu nutzen, trage einfach folgendes in deine \`.env.local\` ein:
 \`\`\`env
 OPENAI_API_KEY=dein_api_schluessel_hier
+# Optional: weitere Keys als Fallback (Reihenfolge = Priorität)
+# AI_API_KEYS=weiterer_key_1,weiterer_key_2
 # Optional (z. B. für OpenRouter, LM Studio, Ollama):
 # AI_BASE_URL=https://openrouter.ai/api/v1
 # AI_MODEL=meta-llama/llama-3-8b-instruct
@@ -201,46 +238,106 @@ OPENAI_API_KEY=dein_api_schluessel_hier
 
 Deine Nachricht wurde dennoch erfolgreich im Chatverlauf gespeichert!`
   } else {
-    try {
-      const messagesPayload = [
-        {
-          role: 'system',
-          content:
-            'Du bist der integrierte KI-Assistent von OmniDesk, einer modularen Produktivitätsplattform für IT-Profis, Fachinformatiker (FiSi) und Power-User. Antworte präzise, hilfsbereit, auf Deutsch, nutze Markdown und hebe Codeblöcke mit passendem Sprachbezeichner hervor.',
-        },
-        ...history.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-      ]
+    const messagesPayload = [
+      {
+        role: 'system',
+        content:
+          'Du bist Omni, der KI-Assistent von OmniDesk, einer modularen Produktivitätsplattform für IT-Profis, Fachinformatiker (FiSi) und Power-User. Du hörst auf den Namen "Omni" – wenn dich jemand mit deinem Namen anspricht (z. B. "Omni, wie geht das?"), antwortest du selbstverständlich direkt. Antworte präzise, hilfsbereit, auf Deutsch, nutze Markdown und hebe Codeblöcke mit passendem Sprachbezeichner hervor.',
+      },
+      ...history.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    ]
 
-      const response = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: messagesPayload,
-          temperature: 0.7,
-        }),
-      })
+    // Start beim "sticky" bevorzugten Key, danach der Rest der Kette.
+    const order = [
+      ...apiKeys.slice(preferredKeyIndex),
+      ...apiKeys.slice(0, preferredKeyIndex),
+    ]
+    let lastStatus: number | null = null
+    let lastError: string | null = null
 
-      if (!response.ok) {
-        const errText = await response.text()
-        assistantContent = `⚠️ **Fehler bei der KI-Anfrage (HTTP ${response.status}):**\n\`\`\`\n${errText}\n\`\`\``
-      } else {
+    for (let i = 0; i < order.length; i++) {
+      const apiKey = order[i]
+      try {
+        const response = await fetch(`${baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: messagesPayload,
+            temperature: 0.7,
+          }),
+        })
+
+        if (!response.ok) {
+          lastStatus = response.status
+          lastError = (await response.text()).slice(0, 500)
+          if (isFailoverStatus(response.status) && i < order.length - 1) {
+            continue // Nächster Key in der Fallback-Kette
+          }
+          assistantContent = `⚠️ **Fehler bei der KI-Anfrage (HTTP ${response.status}):**\n\`\`\`\n${lastError}\n\`\`\``
+          break
+        }
+
         const data = (await response.json()) as {
           choices?: Array<{ message?: { content?: string } }>
+          usage?: {
+            prompt_tokens?: number
+            completion_tokens?: number
+            total_tokens?: number
+          }
         }
         assistantContent =
           data.choices?.[0]?.message?.content ||
           'Es konnte keine Antwort vom Modell generiert werden.'
+
+        // Funktionierenden Key merken, damit künftige Anfragen ihn zuerst nutzen.
+        preferredKeyIndex = apiKeys.indexOf(apiKey)
+
+        // Token-Verbrauch & Rate-Limit-Status (Groq/OpenAI-Header)
+        // für den /context-Befehl im Frontend durchreichen.
+        const toInt = (value: string | null) =>
+          value === null ? null : Number.parseInt(value, 10)
+        usage = {
+          promptTokens: data.usage?.prompt_tokens ?? null,
+          completionTokens: data.usage?.completion_tokens ?? null,
+          totalTokens: data.usage?.total_tokens ?? null,
+          ratelimit:
+            response.headers.has('x-ratelimit-remaining-tokens') ||
+            response.headers.has('x-ratelimit-remaining-requests')
+              ? {
+                  remainingRequests: toInt(
+                    response.headers.get('x-ratelimit-remaining-requests'),
+                  ),
+                  remainingTokens: toInt(
+                    response.headers.get('x-ratelimit-remaining-tokens'),
+                  ),
+                  resetRequests: response.headers.get('x-ratelimit-reset-requests'),
+                  resetTokens: response.headers.get('x-ratelimit-reset-tokens'),
+                }
+              : null,
+        }
+        break
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        lastError = msg
+        if (i < order.length - 1) {
+          continue // Netzwerkfehler → nächster Key
+        }
+        assistantContent = `⚠️ **Verbindungsfehler zur KI-Schnittstelle:**\n${msg}`
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      assistantContent = `⚠️ **Verbindungsfehler zur KI-Schnittstelle:**\n${msg}`
+    }
+
+    // Alle Keys fehlgeschlagen, ohne dass ein Status-Fehler gesetzt wurde:
+    if (!assistantContent && lastStatus !== null && !lastError) {
+      assistantContent = `⚠️ **Fehler bei der KI-Anfrage (HTTP ${lastStatus}).**`
+    } else if (!assistantContent && lastError && lastStatus === null) {
+      assistantContent = `⚠️ **Verbindungsfehler zur KI-Schnittstelle:**\n${lastError}`
     }
   }
 
@@ -257,5 +354,6 @@ Deine Nachricht wurde dennoch erfolgreich im Chatverlauf gespeichert!`
   return c.json({
     userMessage: userMsg,
     assistantMessage: assistantMsg,
+    usage,
   })
 })
