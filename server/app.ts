@@ -31,6 +31,12 @@ export function createApp() {
   // zu lassen (früher ein häufiger Crash-/Absturzgrund).
   app.onError((err, c) => {
     console.error(`[API] Fehler in ${c.req.method} ${c.req.path}:`, err)
+    // Diagnose: Fehlende Env-Variablen direkt in der Antwort verraten,
+    // damit man sie im Browser sieht (statt nur in den Vercel-Logs).
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.startsWith('ENV_FEHLT:')) {
+      return c.json({ error: msg }, 500)
+    }
     return c.json({ error: 'Interner Serverfehler' }, 500)
   })
 
