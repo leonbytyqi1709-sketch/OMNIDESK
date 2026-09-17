@@ -1,2 +1,0 @@
-To https://github.com/leonbytyqi1709-sketch/OMNIDESK.git
-   42ec8e9..e1fa48c  main -> main
