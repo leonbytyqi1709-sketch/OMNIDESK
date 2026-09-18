@@ -156,3 +156,29 @@ Gesamtpruefung A–Z mit 0 Fehlern. Laut Nutzer die "beste Arbeit"
 aller Sessions. Die App ist bereit.
 =====================================================================
 
+
+
+===============================================================
+NACHTRAG 19.09. – API-404-Ursache Nr. 4 (Rewrite-Regel)
+===============================================================
+
+SYMPTOM: Frontend OK, aber alle /api/* -> 404, obwohl die
+Build-Logs bewiesen: api/index.js wurde erfolgreich gebaut
+(108.6kb).
+
+URSACHE: In vercel.json fehlte die Rewrite-Regel
+  { "source": "/api/(.*)", "destination": "/api/index.js" }
+Ohne sie erreicht kein Aufruf die Function (nur exakt /api).
+Die Regel war bei einer frueheren Bearbeitung der vercel.json
+verloren gegangen.
+
+FIX: Regel wiederhergestellt (Commit 814bee1). Das Deployment
+lief automatisch per Git-Push – der Build-Command-Fix in den
+Vercel-Projekteinstellungen ist damit ebenfalls bestaetigt.
+
+LERNREGEL: vercel.json braucht IMMER alle 3 Bloecke gemeinsam:
+1. buildCommand: npm run build
+2. rewrite /api/(.*) -> /api/index.js
+3. rewrite SPA-Fallback -> /index.html
+Fehlt einer davon -> 404. Bei JEDER Aenderung an vercel.json
+beide Rewrites pruefen!
