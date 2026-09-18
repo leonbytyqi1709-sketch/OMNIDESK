@@ -30,3 +30,4 @@ lint_check.txt
 .vercel
 .env*
 api/index.js
+api/[[...route]].js
