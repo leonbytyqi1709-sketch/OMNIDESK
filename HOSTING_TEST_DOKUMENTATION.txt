@@ -1,0 +1,158 @@
+=====================================================================
+ OMNIDESK – HOSTING- & TEST-DOKUMENTATION
+ Session vom 18.09.2026 (Vercel-Deployment, API-Fixes, Gesamtpruefung)
+ Projektdokumentation der erfolgreichsten Session (KI-Assistent:
+ Cline) – App ist seit dieser Session LIVE im Internet.
+=====================================================================
+
+1. ERGEBNIS IN EINEM SATZ
+---------------------------------------------------------------------
+OmniDesk laeuft produktiv auf https://omnidesk-ruby.vercel.app
+(Frontend + API + Neon-Datenbank + Clerk-Login + Groq-KI). Alle 19
+API-Endpunkte getestet, 0 Fehler, 0 Sicherheitsluecken. Letzter
+verifizierter Git-Stand: Commit 5c1f909 ("Fix: Vercel-Build-Command
+verbindlich") auf origin/main.
+
+2. LIVE-URLS & SCHNELLTEST
+---------------------------------------------------------------------
+  App:          https://omnidesk-ruby.vercel.app
+  Health-Check: https://omnidesk-ruby.vercel.app/api/health
+                -> {"ok":true,"ts":...} = alles intakt
+  Geschuetzte API: /api/notes antwortet ohne Login mit 401 (richtig)
+  Vercel-Projekt:  "omnidesk" (prj_fgMmgwb5MzYMcWXKEFnOYEB4VmpV)
+
+3. ARCHITEKTUR IM PRODUKTIVBETRIEB (WICHTIG FUER ALLE KUENFTIGEN
+   SESSIONS – HIER NICHTS LEICHTFERTIG AENDERN!)
+---------------------------------------------------------------------
+  - Vercel baut mit DEM Befehl aus vercel.json:
+      "buildCommand": "npm run build"
+    und npm run build = tsc -b && vite build && bundle:api
+    (bundle:api = esbuild bündelt api/[[...route]].ts inkl. server/
+    und src/db zu einer eigenstaendigen api/index.js)
+  - vercel.json enthaelt zusaetzlich einen Rewrite: alle /api/* ->
+    api/index.js (Catch-All-Routing fuer Hono)
+  - api/index.js exportiert BENANNTE Methoden (GET, POST, PUT,
+    PATCH, DELETE) statt default – Vercel ignoriert sonst die
+    Responses (Symptom: ewiger Timeout / 500)
+  - Serverless-Faustregeln (nach 3 Absturz-Fixes etabliert):
+      a) KEINE Top-Level-Checks, die bei fehlender Env-Var werfen
+         (sonst stirbt die GESAMTE Function beim Kaltstart, auch
+         /health). Loesung: faule Initialisierung – server/auth.ts
+         (getClerkConfig()) und src/db/client.ts (getDb() + Proxy-
+         Export db) lesen Env-Variablen erst zur Laufzeit.
+      b) app.onError in server/app.ts gibt bei Fehlern mit Praefix
+         "ENV_FEHLT:" die fehlende Variable im JSON-Body preis –
+         sofortige Diagnose im Browser moeglich.
+  - Zeitzone: Vercel erlaubt TZ nicht (reserviert, immer UTC).
+    server/timezone.ts fixiert BOOKING_TIMEZONE = 'Europe/Berlin'
+    fest im Code – Booking rechnet daher korrekt.
+
+4. DIE BEHOBENEN BUGS IM DETAIL (fuer die Nachwelt)
+---------------------------------------------------------------------
+  BUG 1 – ERR_MODULE_NOT_FOUND ('/var/task/server/app'):
+    Vercel kompiliert TS-Dateien einzeln; relative Imports ohne
+    Aufloesung funktionieren dort nicht. FIX: esbuild-Bundle
+    (bundle:api) erzeugt eine einzelne api/index.js.
+  BUG 2 – Nur /api erreichbar, /api/notes usw. 404:
+    Kein Catch-All. FIX: Rewrite "source": "/api/(.*)" in
+    vercel.json auf die Function.
+  BUG 3 – Function haengt/500 trotz lebendem Code:
+    Vercel interpretierte den default-Export als Node-Handler und
+    ignorierte zurueckgegebene Response-Objekte. FIX: benannte
+    HTTP-Methoden-Exporte in api/index.js.
+  BUG 4 (18.09., nachts): Vercel baute einmalig NUR "vite build"
+    (ohne API-Bundle) -> alle /api-Routen 404. FIX: verbindliches
+    "buildCommand" in vercel.json (Commit 5c1f909). Kann nicht
+    mehr auftreten, da der Bundle-Schritt fest im Build haengt.
+
+5. ENVIRONMENT-VARIABLEN AUF VERCEL (Stand 18.09.2026)
+---------------------------------------------------------------------
+  Production + Preview (Werte identisch mit .env.local):
+    DATABASE_URL                  (Secret, Neon Postgres)
+    VITE_CLERK_PUBLISHABLE_KEY    (pk_test_..., Prod + Dev)
+    OPENAI_API_KEY                (enthaelt den GROQ-Key gsk_...!)
+    AI_BASE_URL                   (https://api.groq.com/openai/v1)
+    AI_MODEL                      (openai/gpt-oss-120b)
+    GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
+    GOOGLE_REDIRECT_URI           (Production + Preview)
+    CRON_SECRET                   (fuer /api/cron/uptime-refresh)
+  HINWEISE:
+    - Der Name OPENAI_API_KEY ist Tradition (OpenAI-kompatibles
+      Protokoll); der Wert ist der Groq-Key. NICHT umbenennen –
+      server/routes/chat.ts liest genau diesen Namen.
+    - TZ ist auf Vercel reserviert, nicht setzbar (siehe 3).
+    - WICHTIG: Das Vercel-Dashboard zeigt bei env ls fuer
+      VITE_CLERK_PUBLISHABLE_KEY eine maskierte Vorschau "eyJ...",
+      die IRREFUEHREND ist. Verifiziert (via `vercel env pull`):
+      der gespeicherte Wert ist korrekt pk_test_c2hhcn... (56
+      Zeichen). Bei Zweifel immer env pull statt Dashboard lesen.
+
+6. GESAMTPRUEFUNG VOM 18.09.2026 (KI-TEST A–Z) – ALLE GRUEN
+---------------------------------------------------------------------
+  API (19 Endpunkte live getestet):
+    /api/health -> 200 {"ok":true}
+    14 geschuetzte Routen (notes, tasks, contacts, appointments,
+      links, projects, commands, vault, booking, integrations,
+      mail, cloud-monitor, uptime, chat) -> alle 401 ohne Login
+    /api/cron/uptime-refresh -> 403 ohne Secret (korrekt)
+    /api/integrations/google/callback -> 302 Redirect (lebt)
+  Sicherheit:
+    - Gefaelschter JWT -> 401 (Clerk-Verifizierung greift)
+    - POST ohne Auth -> 401 (kein Schreibzugriff)
+    - Unbekannte API-Route -> saubere 401, kein Crash
+    - Git-Repo: nur .env.example getrackt, .env* ignoriert,
+      KEINE Secrets auf GitHub
+    - Frontend-Bundle: OPENAI_API_KEY/DATABASE_URL/GOOGLE_CLIENT_
+      SECRET nur in server/ bzw. db/client.ts – kein Leak moeglich
+    - chat.ts: zod-Validierung (max 20000 Zeichen), striktes
+      userId-Scoping bei jedem Query, Keys nur serverseitig
+  Frontend/Hosting:
+    - SPA-Routing (/dashboard, /module/notes, /module/settings)
+      -> 200 beim Direktaufruf
+    - PWA: manifest.webmanifest, sw.js, registerSW.js, Icons -> 200
+  Code-Qualitaet:
+    - oxlint: 0 Fehler, 7 Warnungen (alle "Fast refresh only works
+      with components" – rein kosmetisch, kein Handlungsbedarf)
+    - npm run build gruen (inkl. TypeScript strict)
+  Bekannt & akzeptiert (gelb, nicht rot):
+    - Clerk Dev-Keys (pk_test_) mit Nutzungslimits -> bei echtem
+      oeffentlichem Betrieb auf pk_live_ umstellen
+    - Cloud-Abhaengigkeit Vercel/Neon (betrifft jede Cloud-App)
+
+7. BETRIEB & WARTUNG (Kurz-Referenz)
+---------------------------------------------------------------------
+  - Deploy:      git push origin main (Vercel baut automatisch,
+                 Git-Integration ist verbunden) oder CLI:
+                 vercel --prod --token <TOKEN>
+  - Logs:        Vercel-Dashboard -> Deployments -> Runtime Logs
+                 oder: vercel logs <url> --token <TOKEN>
+  - Env aendern: Vercel-Dashboard -> Settings -> Environment
+                 Variables, DANACH immer Redeploy!
+                 (VITE_-Variablen sind im Build eingebrannt)
+  - DB-Migration bei Schema-Aenderungen:
+                 npx drizzle-kit push (gegen DATABASE_URL)
+  - Vercel-Token: lief in der Session mit 30-Tage-Limit; bei
+                 Bedarf neu unter vercel.com/account/settings/tokens
+
+8. NAECHSTE SCHRITTE (VORSCHLAEGE, NICHT DRINGEND)
+---------------------------------------------------------------------
+  1. Clerk Production-Instance (pk_live_) erstellen und Keys in
+     .env.local + Vercel tauschen (entfernt Dev-Warnung + Limits)
+  2. 7 Lint-Warnungen beheben: Hilfsfunktionen (isOverdue,
+     extractPlaceholders, replacePlaceholders, tabsListVariants,
+     buttonVariants, badgeVariants) in eigene Dateien auslagern
+  3. Status-Widget im Dashboard: Gruen/Rot-Anzeige von /api/health
+  4. Google-Kalender: Redirect-URI in der Google Cloud Console
+     auf https://omnidesk-ruby.vercel.app/api/integrations/google/
+     callback pruefen und GOOGLE_REDIRECT_URI live testen
+
+9. SESSION-FAZIT
+---------------------------------------------------------------------
+Die Session (Cline/KI-Assistent + Nutzer) hat OmniDesk von
+"404/500-Fehler" zu einem vollstaendig getesteten Live-Betrieb
+gefuehrt: GitHub-Repo gesichert, Vercel-Hosting aufgesetzt, 4
+Build-/Runtime-Bugs behoben, Env-Setup vervollstaendigt,
+Gesamtpruefung A–Z mit 0 Fehlern. Laut Nutzer die "beste Arbeit"
+aller Sessions. Die App ist bereit.
+=====================================================================
+

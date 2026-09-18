@@ -1,12 +1,18 @@
 =====================================================================
  PROMPT FUER CLAUDE / KI-ASSISTENT – einfach komplett einfuegen
- Stand: 12.09.2026 (Phase 1 bis 4 + Power-Befehle + Checklisten + Glows fertig)
+ Stand: 18.09.2026 (ALLES fertig + LIVE auf Vercel deployed & getestet)
+ WICHTIG NEU: Lies zusaetzlich HOSTING_TEST_DOKUMENTATION.txt
+ (Hosting-Architektur, 4 behobene Deploy-Bugs, Testbericht)!
 =====================================================================
 
 Ich arbeite am Projekt OmniDesk – einer modularen All-in-One-
 Produktivitaets-Webapp fuer IT-Profis (Spezifikation liegt als
 omnidesk_spezifikation_v2.pdf im Projektroot).
 Das Repository: https://github.com/leonbytyqi1709-sketch/OMNIDESK.git
+LIVE-DEPLOYMENT (seit 18.09.2026): https://omnidesk-ruby.vercel.app
+  - Vercel deployt automatisch bei jedem git push origin main
+  - Env-Variablen liegen im Vercel-Projekt (Details: HOSTING_TEST_DOKUMENTATION.txt)
+  - Schnellcheck: https://omnidesk-ruby.vercel.app/api/health -> {"ok":true}
 
 WICHTIG – lies zuerst diese Dateien im Projektroot:
   1. DOKUMENTATION.txt  (kompletter Entwicklungsstand, Architektur,

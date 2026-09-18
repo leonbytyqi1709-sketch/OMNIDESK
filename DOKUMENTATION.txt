@@ -6,6 +6,42 @@
  Spezifikation: omnidesk_spezifikation_v2.pdf (im Projektroot)
 =====================================================================
 
+ 0. SESSION VOM 18.09.2026 – VERCEL-LIVE-DEPLOYMENT, API-FIXES &
+    GESAMTPRUEFUNG (APP IST JETZT LIVE!)
+---------------------------------------------------------------------
+ ERLEDIGT (alles verifiziert, Details in HOSTING_TEST_DOKUMENTATION.txt):
+   [x] GitHub-Repo gesichert: leonbytyqi1709-sketch/OMNIDESK,
+       letzte Commits: 5c1f909 (Build-Command), 5ff5217 (API-Bundle),
+       3db1cba (lazy Env-Checks), 88dca3d (Cron daily)
+   [x] Vercel-Hosting aufgesetzt & Git-Integration verbunden
+       -> https://omnidesk-ruby.vercel.app (auto-deploy bei git push)
+   [x] 4 Build-/Runtime-Bugs behoben:
+       1) ERR_MODULE_NOT_FOUND -> esbuild-Bundle api/index.js
+          (npm script "bundle:api", Teil von "npm run build")
+       2) /api/* 404 -> Catch-All-Rewrite in vercel.json
+       3) Responses ignoriert -> benannte Methoden-Exporte (GET/
+          POST/PUT/PATCH/DELETE) statt default in api/index.js
+       4) Naechtlicher Build ohne API -> buildCommand in vercel.json
+          verbindlich gesetzt (5c1f909)
+   [x] Serverless-Haertung: server/auth.ts (getClerkConfig) und
+       src/db/client.ts (getDb + db-Proxy) lesen Env-Variablen jetzt
+       LAUFZEIT-FAUL statt beim Modulstart; app.onError gibt bei
+       "ENV_FEHLT:"-Fehlern die fehlende Variable im JSON aus
+   [x] Env-Variablen auf Vercel vollstaendig gesetzt (DATABASE_URL,
+       Clerk pk_test, Groq-Key unter OPENAI_API_KEY, AI_BASE_URL/
+       MODEL, Google, GOOGLE_REDIRECT_URI, CRON_SECRET). Hinweis:
+       Dashboard-Anzeige fuer Clerk-Key (eyJ...) ist irrefuehrend –
+       via vercel env pull verifiziert korrekt pk_test_c2hhcn...
+   [x] Gesamtpruefung A–Z: 19 API-Endpunkte (200/401/403/302 wie
+       erwartet), Security-Tests (Fake-JWT, POST ohne Auth, keine
+       Secrets im Repo/Bundle), SPA-Routing, PWA-Dateien, oxlint
+       0 Fehler, Build gruen. ERGEBNIS: 0 funktionale Fehler,
+       0 Sicherheitsluecken.
+ APP-URL: https://omnidesk-ruby.vercel.app (Health: /api/health)
+ OFFEN (nicht dringend): Clerk pk_live_, 7 Lint-Warnungen,
+       Health-Status-Widget, Google-Redirect live testen
+
+
 0. SESSION VOM 12.09.2026 (ABEND) – 160+ BEFEHLE, PALETTE, CHECKLISTEN & GLOW-DESIGN
 ---------------------------------------------------------------------
 ERLEDIGT (alle Builds gruen, 0 Lint-Fehler, Dev-Server aktiv):

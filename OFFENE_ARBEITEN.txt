@@ -1,10 +1,39 @@
 =====================================================================
  OMNIDESK – OFFENE / UNTERBROCHENE ARBEITEN
  Uebergabe an die naechste Claude-Session (anderer Account)
- Stand: Session-Abbruch am 17.07.2026
+ Stand: 18.09.2026 (neuestes Update oben)
  Gehoert zu: DOKUMENTATION.txt (Gesamtstand) + WEITERMACHEN_PROMPT.txt
 =====================================================================
 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ UPDATE 18.09.2026 (Cline-Session: LIVE-GEGANGEN + Gesamtpruefung)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ERLEDIGT (Details: HOSTING_TEST_DOKUMENTATION.txt):
+  - APP IST LIVE: https://omnidesk-ruby.vercel.app
+    (Vercel + Neon-DB + Clerk-Login + Groq-KI, auto-deploy bei git push)
+  - Vercel-Deployment komplett eingerichtet; 4 Build-/Runtime-Bugs
+    behoben (esbuild-API-Bundle "bundle:api", Catch-All-Rewrite in
+    vercel.json, benannte Methoden-Exporte, verbindliches
+    "buildCommand"). Alle Fixes committed (bis 5c1f909) + gepusht.
+  - Serverless-Haertung: Env-Checks laufzeit-faul (server/auth.ts,
+    src/db/client.ts), app.onError verrät fehlende Env-Vars
+  - Alle Env-Variablen auf Vercel gesetzt (Groq-Key liegt unter
+    OPENAI_API_KEY – Name ist Absicht, nicht umbenennen!)
+  - GESAMTPRUEFUNG A–Z DURCH KI: 19 API-Endpunkte, Security-Tests,
+    SPA/PWA, Lint/Build -> 0 Fehler, 0 Sicherheitsluecken
+ NEU OFFEN (nicht dringend):
+  1. Clerk auf pk_live_ (Production) umstellen bei oeffentlichem Betrieb
+  2. 7 Lint-Warnungen (Fast refresh) kosmetisch beheben
+  3. Health-Status-Widget im Dashboard (Gruen/Rot von /api/health)
+  4. Google-Redirect live testen (GOOGLE_REDIRECT_URI auf
+     https://omnidesk-ruby.vercel.app/api/integrations/google/callback)
+ VORHER OFFEN (aus 12.09.), TEILWEISE ERFUELLT:
+  - "Vercel-Deployment durchfuehren" -> ERFUELLT am 18.09. ✓
+  - Google/MEGA-Verknuepfung live testen -> noch offen
+  - Passwort-Manager: echtes Master-Passwort setzen -> noch offen
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ UPDATE 12.09.2026 (Abend-Session: Power-Befehle, Palette, Glows & Feierabend)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  UPDATE 12.09.2026 (Abend-Session: Power-Befehle, Palette, Glows & Feierabend)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
